@@ -22,7 +22,7 @@ class AdminSeeder extends Seeder
             ['email' => 'shaileshdhandhukiya012@gmail.com'],
             [
                 'name' => 'Shailesh Dhandhukiya',
-                'phone' => '+1234567890',
+                'phone' => '+917265047893',
                 'password' => Hash::make('123456789'),
                 'email_verified_at' => now(),
             ]

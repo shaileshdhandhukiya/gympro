@@ -17,19 +17,10 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
-
-        Schema::create('plan_features', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('plan_id')->constrained('plans')->onDelete('cascade');
-            $table->foreignId('feature_id')->constrained('features')->onDelete('cascade');
-            $table->timestamps();
-            $table->unique(['plan_id', 'feature_id']);
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('plan_features');
         Schema::dropIfExists('features');
     }
 };

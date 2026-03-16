@@ -8,8 +8,8 @@ use App\Models\Subscription;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
-use App\Notifications\Events\SubscriptionPurchasedEvent;
-use App\Services\NotificationService;
+use App\Notifications\NewSubscriptionAdminNotification;
+use App\Notifications\PaymentConfirmedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -356,23 +356,26 @@ class PhonePePaymentController extends Controller
 
     private function dispatchNotifications($subscription, $member, $plan, $amount): void
     {
-        $notificationService = app(NotificationService::class);
-
-        $payload = [
+        $memberPayload = [
             'subscription_id' => $subscription->id,
+            'payment_id'      => null,
             'plan_name'       => $plan->name,
-            'member_name'     => $member->user->name,
             'amount'          => $amount,
         ];
 
-        $notificationService->dispatchEvent(
-            new SubscriptionPurchasedEvent($member->user, $payload)
-        );
+        // Ensure this only runs if the transaction commits without error
+        DB::afterCommit(function () use ($member, $memberPayload, $plan, $amount) {
+            // Member gets a first-person payment confirmation
+            if ($member->user) {
+                $member->user->notify(new PaymentConfirmedNotification($memberPayload));
+            }
 
-        User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Manager']))
-            ->get()
-            ->each(fn($admin) => $notificationService->dispatchEvent(
-                new SubscriptionPurchasedEvent($admin, $payload)
-            ));
+            // Admins get a third-person new subscription alert
+            $adminPayload = array_merge($memberPayload, ['member_name' => $member->user->name]);
+
+            User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Manager']))
+                ->get()
+                ->each(fn($admin) => $admin->notify(new NewSubscriptionAdminNotification($adminPayload)));
+        });
     }
 }

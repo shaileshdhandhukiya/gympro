@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Bell, X, Check } from 'lucide-react';
+import { Bell, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { usePage } from '@inertiajs/react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
+import { usePage, Link } from '@inertiajs/react';
 
 interface Notification {
     id: string;
@@ -23,7 +25,7 @@ export default function NotificationCenter() {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 5000);
+        const interval = setInterval(fetchNotifications, 10000);
         return () => clearInterval(interval);
     }, []);
 
@@ -58,9 +60,7 @@ export default function NotificationCenter() {
                 },
             });
 
-            if (response.ok) {
-                fetchNotifications();
-            }
+            if (response.ok) fetchNotifications();
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
         }
@@ -76,111 +76,119 @@ export default function NotificationCenter() {
                 },
             });
 
-            if (response.ok) {
-                fetchNotifications();
-            }
+            if (response.ok) fetchNotifications();
         } catch (error) {
             console.error('Failed to mark all as read:', error);
         }
     };
 
-    const deleteNotification = async (id: string) => {
-        try {
-            const response = await fetch(`/api/notifications/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                },
-            });
-
-            if (response.ok) {
-                fetchNotifications();
-            }
-        } catch (error) {
-            console.error('Failed to delete notification:', error);
-        }
+    const formatTime = (date: string) => {
+        const d = new Date(date);
+        const now = new Date();
+        const diff = now.getTime() - d.getTime();
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        
+        if (mins < 1) return 'now';
+        if (mins < 60) return `${mins}m`;
+        if (hours < 24) return `${hours}h`;
+        return `${Math.floor(diff / 86400000)}d`;
     };
 
     return (
-        <div className="relative">
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(!isOpen)}
-                className="relative"
-            >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                        {unreadCount}
-                    </span>
-                )}
-            </Button>
-
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-slate-950 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 z-50">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-                        <h3 className="font-semibold">Notifications</h3>
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                        </span>
+                    )}
+                </Button>
+            </PopoverTrigger>
+            
+            <PopoverContent className="w-96 p-0 mr-4" align="end" sideOffset={8}>
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <div className="flex items-center gap-2">
+                        <h4 className="font-semibold leading-none">Notifications</h4>
                         {unreadCount > 0 && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={markAllAsRead}
-                            >
-                                Mark all as read
-                            </Button>
+                            <Badge variant="secondary" className="px-1.5 rounded-sm">{unreadCount} new</Badge>
                         )}
                     </div>
-
-                    <div className="max-h-96 overflow-y-auto">
-                        {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-gray-500">
-                                No notifications
-                            </div>
-                        ) : (
-                            notifications.map(notification => (
-                                <div
-                                    key={notification.id}
-                                    className={`p-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 ${
-                                        !notification.read_at ? 'bg-blue-50 dark:bg-blue-950' : ''
-                                    }`}
-                                >
-                                    <div className="flex justify-between items-start gap-2">
-                                        <div className="flex-1">
-                                            <p className="font-medium text-sm">{notification.title}</p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                {notification.message}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {new Date(notification.created_at).toLocaleString()}
-                                            </p>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            {!notification.read_at && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => markAsRead(notification.id)}
-                                                >
-                                                    <Check className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => deleteNotification(notification.id)}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
+                    {unreadCount > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                            onClick={markAllAsRead}
+                        >
+                            Mark all read
+                        </Button>
+                    )}
                 </div>
-            )}
-        </div>
+                
+                <div className="max-h-[350px] overflow-y-auto w-full flex flex-col hide-scrollbar">
+                    {notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
+                                <Bell className="h-5 w-5 text-muted-foreground/50" />
+                            </div>
+                            <p className="text-sm font-medium text-foreground">All caught up!</p>
+                            <p className="text-xs text-muted-foreground mt-1">No new notifications.</p>
+                        </div>
+                    ) : (
+                        notifications.map(notification => (
+                            <div
+                                key={notification.id}
+                                className={`group flex gap-3 px-4 py-3 text-sm transition-colors border-b last:border-0 relative ${
+                                    !notification.read_at ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/50'
+                                }`}
+                            >
+                                {!notification.read_at && (
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                                )}
+                                <div className="flex-1 space-y-1">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="font-medium leading-none truncate">
+                                            {notification.title}
+                                        </p>
+                                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                            {formatTime(notification.created_at)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground line-clamp-2">
+                                        {notification.message}
+                                    </p>
+                                </div>
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 items-end">
+                                    {!notification.read_at && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6"
+                                            onClick={(e) => { e.preventDefault(); markAsRead(notification.id); }}
+                                            title="Mark as read"
+                                        >
+                                            <Check className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+                <div className="p-2 border-t text-center">
+                    <Link 
+                        href="/notifications" 
+                        onClick={() => setIsOpen(false)}
+                        className="text-xs font-medium text-primary hover:underline"
+                    >
+                        View all notifications
+                    </Link>
+                </div>
+            </PopoverContent>
+        </Popover>
     );
 }

@@ -5,17 +5,16 @@ namespace App\Services;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Notifications\Events\SubscriptionPurchasedEvent;
-use App\Services\NotificationService;
+use App\Notifications\NewSubscriptionAdminNotification;
+use App\Notifications\PaymentConfirmedNotification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PaymentService
 {
-    public function __construct(
-        private NotificationService $notificationService
-    ) {}
+    public function __construct() {}
 
     /**
      * Get paginated payments with filtering
@@ -60,38 +59,32 @@ class PaymentService
     {
         $data['payment_source'] = $data['payment_source'] ?? 'manual';
 
+        // Notification dispatch wrapped in afterCommit for transaction safety
         $payment = Payment::create($data);
 
         if ($payment->status === 'completed') {
-            $subscription = $payment->subscription->load('member.user', 'plan');
-            $member = $subscription->member;
-            $plan = $subscription->plan;
+            DB::afterCommit(function() use ($payment) {
+                $subscription = $payment->subscription->load('member.user', 'plan');
+                $member       = $subscription->member;
+                $plan         = $subscription->plan;
 
-            // Notify member
-            $memberEvent = new SubscriptionPurchasedEvent($member->user, [
-                'subscription_id' => $subscription->id,
-                'payment_id' => $payment->id,
-                'plan_name' => $plan->name,
-                'member_name' => $member->user->name,
-                'amount' => $payment->amount,
-            ]);
-            $this->notificationService->dispatchEvent($memberEvent);
-
-            // Notify admins
-            $admins = User::whereHas('roles', function($q) {
-                $q->whereIn('name', ['Admin', 'Manager']);
-            })->get();
-            
-            foreach ($admins as $admin) {
-                $adminEvent = new SubscriptionPurchasedEvent($admin, [
+                $payload = [
                     'subscription_id' => $subscription->id,
-                    'payment_id' => $payment->id,
-                    'plan_name' => $plan->name,
-                    'member_name' => $member->user->name,
-                    'amount' => $payment->amount,
-                ]);
-                $this->notificationService->dispatchEvent($adminEvent);
-            }
+                    'payment_id'      => $payment->id,
+                    'plan_name'       => $plan->name,
+                    'amount'          => $payment->amount,
+                ];
+
+                if ($member->user) {
+                    $member->user->notify(new PaymentConfirmedNotification($payload));
+                }
+
+                $adminPayload = array_merge($payload, ['member_name' => $member->user->name]);
+
+                User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Manager']))
+                    ->get()
+                    ->each(fn($admin) => $admin->notify(new NewSubscriptionAdminNotification($adminPayload)));
+            });
         }
 
         return $payment->fresh(['subscription.member.user', 'subscription.plan']);
@@ -107,15 +100,18 @@ class PaymentService
 
         // Create notification if status changed to completed
         if ($oldStatus !== 'completed' && $payment->status === 'completed') {
-            $this->notificationService->create([
-                'type' => 'payment_completed',
-                'title' => 'Payment Completed',
-                'message' => "Payment of ₹{$payment->amount} has been marked as completed",
-                'data' => ['payment_id' => $payment->id],
-                'user_id' => $payment->subscription->member->user_id,
-                'priority' => 'normal',
-                'color' => '#10b981',
-            ]);
+            DB::afterCommit(function() use ($payment) {
+                $subscription = $payment->subscription->load('member.user', 'plan');
+                if ($subscription->member->user) {
+                    $payload = [
+                        'subscription_id' => $subscription->id,
+                        'payment_id'      => $payment->id,
+                        'plan_name'       => $subscription->plan->name,
+                        'amount'          => $payment->amount,
+                    ];
+                    $subscription->member->user->notify(new PaymentConfirmedNotification($payload));
+                }
+            });
         }
 
         return $payment->fresh(['subscription.member.user', 'subscription.plan']);

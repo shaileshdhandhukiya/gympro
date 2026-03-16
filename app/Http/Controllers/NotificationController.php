@@ -2,17 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class NotificationController extends Controller
 {
+    private function userNotificationsQuery()
+    {
+        $user     = auth()->user();
+        $isMember = $user->isMember() && !$user->isAdmin();
+
+        return Notification::forUser(
+            $user->id,
+            $isMember
+        )->latest();
+    }
+
     public function index(Request $request)
     {
-        $user    = auth()->user();
-        $perPage = (int) $request->get('per_page', 15);
-
-        $paginated = $user->notifications()->latest()->paginate($perPage);
+        $perPage   = (int) $request->get('per_page', 15);
+        $paginated = $this->userNotificationsQuery()->paginate($perPage);
 
         return Inertia::render('Notifications/Index', [
             'notifications' => [
@@ -30,8 +40,7 @@ class NotificationController extends Controller
 
     public function getRecent(Request $request)
     {
-        $notifications = auth()->user()->notifications()
-            ->latest()
+        $notifications = $this->userNotificationsQuery()
             ->limit(10)
             ->get()
             ->map(fn($n) => [
@@ -51,13 +60,13 @@ class NotificationController extends Controller
 
     public function getUnreadCount(Request $request)
     {
-        $count = auth()->user()->notifications()->whereNull('read_at')->count();
+        $count = $this->userNotificationsQuery()->whereNull('read_at')->count();
         return response()->json(['count' => $count]);
     }
 
     public function markAsRead(Request $request, $id)
     {
-        $notification = auth()->user()->notifications()->find($id);
+        $notification = $this->userNotificationsQuery()->find($id);
 
         if ($notification) {
             $notification->update(['read_at' => now()]);
@@ -68,13 +77,13 @@ class NotificationController extends Controller
 
     public function markAllAsRead(Request $request)
     {
-        auth()->user()->notifications()->whereNull('read_at')->update(['read_at' => now()]);
+        $this->userNotificationsQuery()->whereNull('read_at')->update(['read_at' => now()]);
         return response()->json(['success' => true]);
     }
 
     public function destroy(Request $request, $id)
     {
-        $notification = auth()->user()->notifications()->find($id);
+        $notification = $this->userNotificationsQuery()->find($id);
 
         if ($notification) {
             $notification->delete();

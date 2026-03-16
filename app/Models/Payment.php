@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Notifications\Events\PaymentReceivedEvent;
-use App\Services\NotificationService;
+// use App\Notifications\Events\PaymentReceivedEvent;
+// use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
@@ -38,7 +38,6 @@ class Payment extends Model
 
         static::created(function ($payment) {
             if ($payment->status === 'completed') {
-                self::notifyPaymentReceived($payment);
                 \Log::info('Payment created, triggering activation', ['payment_id' => $payment->id, 'subscription_id' => $payment->subscription_id]);
                 $payment->subscription->checkAndActivate();
             }
@@ -46,26 +45,12 @@ class Payment extends Model
 
         static::updated(function ($payment) {
             if ($payment->isDirty('status') && $payment->status === 'completed') {
-                self::notifyPaymentReceived($payment);
                 $payment->subscription->checkAndActivate();
             }
         });
     }
 
-    private static function notifyPaymentReceived(self $payment): void
-    {
-        if (!$payment->subscription->member->user) {
-            return;
-        }
 
-        $event = new PaymentReceivedEvent($payment->subscription->member->user, [
-            'payment_id' => $payment->id,
-            'amount' => $payment->amount,
-            'subscription_id' => $payment->subscription_id,
-        ]);
-
-        app(NotificationService::class)->dispatchEvent($event);
-    }
 
     public function subscription()
     {

@@ -7,7 +7,7 @@ use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Trainer;
 use App\Models\Payment;
-use App\Notifications\Events\SubscriptionExpiringEvent;
+use App\Notifications\SubscriptionExpiringNotification;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Collection;
@@ -180,13 +180,13 @@ class SubscriptionService
                 continue;
             }
 
-            $event = new SubscriptionExpiringEvent($subscription->member->user, [
+            $payload = [
                 'subscription_id' => $subscription->id,
                 'plan_name' => $subscription->plan->name,
                 'end_date' => $subscription->end_date->format('Y-m-d'),
-            ]);
+            ];
 
-            $this->notificationService->dispatchEvent($event);
+            $subscription->member->user->notify(new SubscriptionExpiringNotification($payload));
             $notifiedCount++;
         }
 

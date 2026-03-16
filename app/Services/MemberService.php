@@ -89,15 +89,19 @@ class MemberService
             'notes' => $data['notes'] ?? null,
         ]);
 
-        // Create notification
-        $this->notificationService->create([
-            'type' => 'member_registered',
-            'title' => 'New Member Registered',
-            'message' => "New member {$data['name']} has been registered",
-            'data' => ['member_id' => $member->id],
-            'priority' => 'normal',
-            'color' => '#10b981',
-        ]);
+        // Notify admins only — this is an admin-facing alert, not for the member
+        $adminMessage = "New member {$data['name']} has been registered";
+        User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Manager']))
+            ->get()
+            ->each(fn($admin) => $this->notificationService->create([
+                'type'     => 'member_registered',
+                'title'    => 'New Member Registered',
+                'message'  => $adminMessage,
+                'data'     => ['member_id' => $member->id],
+                'user_id'  => $admin->id,
+                'priority' => 'normal',
+                'color'    => '#10b981',
+            ]));
 
         return $member;
     }

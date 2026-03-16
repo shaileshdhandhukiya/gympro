@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Notifications\Events\SubscriptionCreatedEvent;
-use App\Notifications\Events\SubscriptionExpiredEvent;
-use App\Services\NotificationService;
+// use App\Notifications\Events\SubscriptionCreatedEvent;
+// use App\Notifications\Events\SubscriptionExpiredEvent;
+// use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -52,43 +52,15 @@ class Subscription extends Model
     protected static function booted()
     {
         static::created(function (self $subscription) {
-            self::notifySubscriptionCreated($subscription);
+            // Notifications are now handled by service layer after commit
         });
 
         static::updating(function (self $subscription) {
-            if ($subscription->isDirty('status') && $subscription->status === 'expired') {
-                self::notifySubscriptionExpired($subscription);
-            }
+            // Expiration notifications are now handled by service layer or scheduled commands
         });
     }
 
-    private static function notifySubscriptionCreated(self $subscription): void
-    {
-        if (!$subscription->member->user) {
-            return;
-        }
 
-        $event = new SubscriptionCreatedEvent($subscription->member->user, [
-            'subscription_id' => $subscription->id,
-            'plan_name' => $subscription->plan->name,
-        ]);
-
-        app(NotificationService::class)->dispatchEvent($event);
-    }
-
-    private static function notifySubscriptionExpired(self $subscription): void
-    {
-        if (!$subscription->member->user) {
-            return;
-        }
-
-        $event = new SubscriptionExpiredEvent($subscription->member->user, [
-            'subscription_id' => $subscription->id,
-            'plan_name' => $subscription->plan->name,
-        ]);
-
-        app(NotificationService::class)->dispatchEvent($event);
-    }
 
     // Computed attributes
     public function getTotalPaidAttribute()

@@ -60,11 +60,18 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class);
     }
 
+    /** @var array<string>|null */
+    private ?array $permissionsCache = null;
+
     public function getAllPermissions(): array
     {
-        return $this->roles()->with('permissions')->get()
-            ->pluck('permissions')->flatten()
-            ->pluck('name')->unique()->values()->toArray();
+        if ($this->permissionsCache === null) {
+            $this->permissionsCache = $this->roles()->with('permissions')->get()
+                ->pluck('permissions')->flatten()
+                ->pluck('name')->unique()->values()->toArray();
+        }
+
+        return $this->permissionsCache;
     }
 
     public function hasPermission(string $permission): bool
@@ -75,6 +82,11 @@ class User extends Authenticatable
     public function can($ability, $arguments = []): bool
     {
         return $this->hasPermission($ability) || parent::can($ability, $arguments);
+    }
+
+    public function flushPermissionsCache(): void
+    {
+        $this->permissionsCache = null;
     }
 
     public function member()
@@ -89,17 +101,23 @@ class User extends Authenticatable
 
     public function isMember(): bool
     {
-        return $this->roles()->where('name', 'Member')->exists();
+        return $this->relationLoaded('roles')
+            ? $this->roles->contains('name', 'Member')
+            : $this->roles()->where('name', 'Member')->exists();
     }
 
     public function isTrainer(): bool
     {
-        return $this->roles()->where('name', 'Trainer')->exists();
+        return $this->relationLoaded('roles')
+            ? $this->roles->contains('name', 'Trainer')
+            : $this->roles()->where('name', 'Trainer')->exists();
     }
 
     public function isAdmin(): bool
     {
-        return $this->roles()->whereIn('name', ['Admin', 'Manager'])->exists();
+        return $this->relationLoaded('roles')
+            ? $this->roles->contains(fn($r) => in_array($r->name, ['Admin', 'Manager']))
+            : $this->roles()->whereIn('name', ['Admin', 'Manager'])->exists();
     }
 
     public function notifications()

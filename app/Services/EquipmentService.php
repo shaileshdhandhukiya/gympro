@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Equipment;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class EquipmentService
 {
@@ -110,9 +112,9 @@ class EquipmentService
             'by_condition' => Equipment::selectRaw('condition, COUNT(*) as count')
                 ->groupBy('condition')
                 ->get(),
-            'total_value' => Equipment::sum(\DB::raw('purchase_price * quantity')),
+            'total_value'      => Equipment::sum(DB::raw('purchase_price * quantity')),
             'recent_purchases' => Equipment::where('purchase_date', '>=', now()->subMonths(3))
-                ->sum(\DB::raw('purchase_price * quantity')),
+                ->sum(DB::raw('purchase_price * quantity')),
         ];
     }
 

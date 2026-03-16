@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\Trainer;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Hash;
 
 class TrainerService
 {
@@ -40,15 +42,14 @@ class TrainerService
     {
         // Create user account first
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-            'password' => \Hash::make($data['password']),
-            'status' => $data['status'],
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'phone'    => $data['phone'],
+            'password' => Hash::make($data['password']),
+            'status'   => $data['status'],
         ]);
 
-        // Assign trainer role
-        $trainerRole = \App\Models\Role::where('name', 'Trainer')->first();
+        $trainerRole = Role::where('name', 'Trainer')->first();
         if ($trainerRole) {
             $user->roles()->attach($trainerRole->id);
         }
@@ -80,7 +81,7 @@ class TrainerService
         ];
 
         if (!empty($data['password'])) {
-            $userData['password'] = \Hash::make($data['password']);
+            $userData['password'] = Hash::make($data['password']);
         }
 
         $trainer->user->update($userData);

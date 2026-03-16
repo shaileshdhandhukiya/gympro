@@ -19,18 +19,24 @@ class EquipmentController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        $validated = $request->validate([
+            'search'   => 'nullable|string|max:255',
+            'status'   => 'nullable|in:active,maintenance,retired',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
         $filters = [
-            'search' => $request->search,
-            'status' => $request->status !== 'all' ? $request->status : null,
-            'per_page' => (int) ($request->per_page ?? 10),
+            'search'   => $validated['search'] ?? null,
+            'status'   => $validated['status'] ?? null,
+            'per_page' => (int) ($validated['per_page'] ?? 10),
         ];
 
         $result = $this->equipmentService->getEquipment($filters);
 
         return Inertia::render('equipment/Index', [
             'equipment' => $result['equipment'],
-            'stats' => $result['stats'],
-            'filters' => $filters,
+            'stats'     => $result['stats'],
+            'filters'   => $filters,
         ]);
     }
 
@@ -42,14 +48,13 @@ class EquipmentController extends Controller
 
         $validated = $request->validate($this->equipmentService->getValidationRules());
 
-        // Handle file upload
         if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo');
         }
 
         $this->equipmentService->createEquipment($validated);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Equipment created successfully');
     }
 
     public function update(Request $request, Equipment $equipment)
@@ -60,14 +65,13 @@ class EquipmentController extends Controller
 
         $validated = $request->validate($this->equipmentService->getValidationRules());
 
-        // Handle file upload
         if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo');
         }
 
         $this->equipmentService->updateEquipment($equipment, $validated);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Equipment updated successfully');
     }
 
     public function destroy(Equipment $equipment)
@@ -78,6 +82,6 @@ class EquipmentController extends Controller
 
         $this->equipmentService->deleteEquipment($equipment);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Equipment deleted successfully');
     }
 }

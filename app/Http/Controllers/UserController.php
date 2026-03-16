@@ -29,9 +29,8 @@ class UserController extends Controller
 
         $query = User::with('roles')
             ->when($search, function ($q) use ($search) {
-                $sanitized = htmlspecialchars($search, ENT_QUOTES, 'UTF-8');
-                $q->where('name', 'like', "%{$sanitized}%")
-                  ->orWhere('email', 'like', "%{$sanitized}%");
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
             })
             ->when($roleFilter, function ($q) use ($roleFilter) {
                 $q->whereHas('roles', function ($query) use ($roleFilter) {
@@ -63,25 +62,30 @@ class UserController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required|string|min:8',
             'profile_image' => 'nullable|image|max:2048',
-            'status' => 'required|in:active,inactive',
-            'roles' => 'array',
+            'status'        => 'required|in:active,inactive',
+            'roles'         => 'nullable|array',
+            'roles.*'       => 'integer|exists:roles,id',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+        $roles = $validated['roles'] ?? [];
+
+        $userData = [
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'status'   => $validated['status'],
+        ];
 
         if ($request->hasFile('profile_image')) {
-            $validated['profile_image'] = $request->file('profile_image')->store('profiles', 'public');
+            $userData['profile_image'] = $request->file('profile_image')->store('profiles', 'public');
         }
 
-        $user = User::create($validated);
-        
-        if (isset($validated['roles'])) {
-            $user->roles()->sync($validated['roles']);
-        }
+        $user = User::create($userData);
+        $user->roles()->sync($roles);
 
         return redirect()->back()->with('success', 'User created successfully');
     }
@@ -93,32 +97,36 @@ class UserController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email,' . $user->id,
+            'password'      => 'nullable|string|min:8',
             'profile_image' => 'nullable|image|max:2048',
-            'status' => 'required|in:active,inactive',
-            'roles' => 'array',
+            'status'        => 'required|in:active,inactive',
+            'roles'         => 'nullable|array',
+            'roles.*'       => 'integer|exists:roles,id',
         ]);
 
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
+        $roles = $validated['roles'] ?? [];
+
+        $userData = [
+            'name'   => $validated['name'],
+            'email'  => $validated['email'],
+            'status' => $validated['status'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $userData['password'] = Hash::make($validated['password']);
         }
 
         if ($request->hasFile('profile_image')) {
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);
             }
-            $validated['profile_image'] = $request->file('profile_image')->store('profiles', 'public');
+            $userData['profile_image'] = $request->file('profile_image')->store('profiles', 'public');
         }
 
-        $user->update($validated);
-        
-        if (isset($validated['roles'])) {
-            $user->roles()->sync($validated['roles']);
-        }
+        $user->update($userData);
+        $user->roles()->sync($roles);
 
         return redirect()->back()->with('success', 'User updated successfully');
     }
@@ -127,6 +135,10 @@ class UserController extends Controller
     {
         if (!auth()->user()->hasPermission('delete_users')) {
             abort(403, 'Unauthorized action.');
+        }
+
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->withErrors(['user' => 'You cannot delete your own account.']);
         }
 
         if ($user->profile_image) {

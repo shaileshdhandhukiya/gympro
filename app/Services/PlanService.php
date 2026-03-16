@@ -69,16 +69,6 @@ class PlanService
      */
     public function deletePlan(Plan $plan): bool
     {
-        // Check if plan is being used by active subscriptions
-        $activeSubscriptions = $plan->subscriptions()
-            ->where('status', 'active')
-            ->where('end_date', '>=', now())
-            ->count();
-
-        if ($activeSubscriptions > 0) {
-            throw new \Exception('Cannot delete plan that has active subscriptions');
-        }
-
         return $plan->delete();
     }
 

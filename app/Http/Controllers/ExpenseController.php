@@ -19,17 +19,23 @@ class ExpenseController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        $validated = $request->validate([
+            'search'   => 'nullable|string|max:255',
+            'category' => 'nullable|in:equipment,maintenance,utilities,salaries,rent,marketing,other',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
         $filters = [
-            'search' => $request->search,
-            'category' => $request->category !== 'all' ? $request->category : null,
-            'per_page' => (int) ($request->per_page ?? 10),
+            'search'   => $validated['search'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'per_page' => (int) ($validated['per_page'] ?? 10),
         ];
 
         $expenses = $this->expenseService->getExpenses($filters);
 
         return Inertia::render('Expenses/Index', [
             'expenses' => $expenses,
-            'filters' => $filters,
+            'filters'  => $filters,
         ]);
     }
 
@@ -42,7 +48,7 @@ class ExpenseController extends Controller
         $validated = $request->validate($this->expenseService->getValidationRules());
         $this->expenseService->createExpense($validated);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Expense created successfully');
     }
 
     public function update(Request $request, Expense $expense)
@@ -54,7 +60,7 @@ class ExpenseController extends Controller
         $validated = $request->validate($this->expenseService->getValidationRules());
         $this->expenseService->updateExpense($expense, $validated);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Expense updated successfully');
     }
 
     public function destroy(Expense $expense)
@@ -65,6 +71,6 @@ class ExpenseController extends Controller
 
         $this->expenseService->deleteExpense($expense);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Expense deleted successfully');
     }
 }

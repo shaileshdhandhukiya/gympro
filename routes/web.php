@@ -33,6 +33,11 @@ Route::get('/refund-policy', fn() => inertia('RefundPolicy'));
 Route::get('/about', fn() => inertia('About'));
 Route::get('/contact', fn() => inertia('Contact'));
 
+// PhonePe server-to-server webhook — POST only, no auth, no CSRF
+Route::post('phonepe/webhook/{orderId}', [\App\Http\Controllers\PhonePePaymentController::class, 'webhook'])
+    ->name('phonepe.webhook')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('member/dashboard', [MemberDashboardController::class, 'index'])->name('member.dashboard');
@@ -40,7 +45,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('member/plans', [MemberPlanController::class, 'index'])->name('member.plans');
     Route::get('member/plans/{plan}/checkout', [\App\Http\Controllers\PhonePePaymentController::class, 'checkout'])->name('member.plans.checkout');
     Route::get('member/plans/{plan}/pay', [\App\Http\Controllers\PhonePePaymentController::class, 'initiatePayment'])->name('member.plans.pay');
-    Route::any('phonepe/callback/{orderId}', [\App\Http\Controllers\PhonePePaymentController::class, 'callback'])->name('phonepe.callback');
+    // Browser return after payment — read-only, shows status only
+    Route::get('phonepe/redirect/{orderId}', [\App\Http\Controllers\PhonePePaymentController::class, 'redirect'])->name('phonepe.redirect');
 
     Route::resource('members', MemberController::class)->except(['show', 'create', 'edit']);
     Route::resource('plans', PlanController::class)->except(['show', 'create', 'edit']);

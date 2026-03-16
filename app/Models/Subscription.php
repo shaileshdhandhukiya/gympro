@@ -8,6 +8,7 @@ use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 class Subscription extends Model
 {
@@ -98,14 +99,14 @@ class Subscription extends Model
     public function getPaymentStatusAttribute()
     {
         $totalPaid = $this->total_paid;
-        
+
         if (!$this->relationLoaded('plan')) {
             $this->load('plan');
         }
-        
-        $planPrice = $this->plan->price ?? 0;
-        $admissionFee = $this->plan->admission_fee ?? 0;
-        $totalRequired = $planPrice + $admissionFee;
+
+        // Compare against plan price only — admission fee is tracked as a
+        // separate payment_type='admission' and may not apply to renewals
+        $totalRequired = $this->plan->price ?? 0;
 
         if ($totalPaid >= $totalRequired) return 'paid';
         if ($totalPaid > 0) return 'partial';
@@ -115,19 +116,17 @@ class Subscription extends Model
 
     public function checkAndActivate()
     {
+        // Only relevant for manually-created subscriptions starting as 'pending'
+        if ($this->status !== 'pending') {
+            return;
+        }
+
         $this->refresh();
         $this->load('plan', 'payments');
-        
-        \Log::info('Checking subscription activation', [
-            'subscription_id' => $this->id,
-            'status' => $this->status,
-            'payment_status' => $this->payment_status,
-            'total_paid' => $this->total_paid
-        ]);
-        
-        if ($this->payment_status === 'paid' && $this->status === 'pending') {
+
+        if ($this->payment_status === 'paid') {
             $this->update(['status' => 'active']);
-            \Log::info('Subscription activated', ['subscription_id' => $this->id]);
+            Log::info('Subscription activated', ['subscription_id' => $this->id]);
         }
     }
 }

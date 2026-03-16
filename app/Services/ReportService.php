@@ -11,6 +11,7 @@ use App\Models\Expense;
 use App\Models\Equipment;
 use App\Exports\ReportsExport;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Excel;
 
@@ -118,11 +119,11 @@ class ReportService
             'expiring_soon' => Subscription::where('status', 'active')
                 ->whereBetween('end_date', [Carbon::now(), Carbon::now()->addDays(7)])
                 ->count(),
-            'by_plan' => Subscription::with('plan')
-                ->selectRaw('plan_id, COUNT(*) as count')
-                ->groupBy('plan_id')
+            'by_plan' => Subscription::join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+                ->selectRaw('plans.name, COUNT(subscriptions.id) as count')
+                ->groupBy('plans.id', 'plans.name')
                 ->get()
-                ->map(fn($s) => ['name' => $s->plan?->name ?? 'Unknown', 'count' => $s->count]),
+                ->map(fn($s) => ['name' => $s->name, 'count' => $s->count]),
             'monthly_trends' => $this->getSubscriptionTrends(),
         ];
     }
@@ -181,7 +182,7 @@ class ReportService
             'by_category' => Equipment::selectRaw('category, COUNT(*) as count, SUM(quantity) as total_quantity')
                 ->groupBy('category')
                 ->get(),
-            'total_value' => Equipment::sum(\DB::raw('purchase_price * quantity')),
+            'total_value' => Equipment::sum(DB::raw('purchase_price * quantity')),
         ];
     }
 

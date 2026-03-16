@@ -9,22 +9,20 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        $user = auth()->user();
-        $perPage = $request->get('per_page', 15);
-        
-        $paginated = $user->notifications()
-            ->latest()
-            ->paginate($perPage);
+        $user    = auth()->user();
+        $perPage = (int) $request->get('per_page', 15);
+
+        $paginated = $user->notifications()->latest()->paginate($perPage);
 
         return Inertia::render('Notifications/Index', [
             'notifications' => [
-                'data' => $paginated->items(),
+                'data'  => $paginated->items(),
                 'links' => $paginated->linkCollection(),
-                'meta' => [
-                    'total' => $paginated->total(),
-                    'per_page' => $paginated->perPage(),
+                'meta'  => [
+                    'total'        => $paginated->total(),
+                    'per_page'     => $paginated->perPage(),
                     'current_page' => $paginated->currentPage(),
-                    'last_page' => $paginated->lastPage(),
+                    'last_page'    => $paginated->lastPage(),
                 ],
             ],
         ]);
@@ -32,20 +30,19 @@ class NotificationController extends Controller
 
     public function getRecent(Request $request)
     {
-        $user = auth()->user();
-        $notifications = $user->notifications()
+        $notifications = auth()->user()->notifications()
             ->latest()
             ->limit(10)
             ->get()
             ->map(fn($n) => [
-                'id' => $n->id,
-                'type' => $n->type,
-                'title' => $n->title,
-                'message' => $n->message,
-                'data' => $n->data,
-                'priority' => $n->priority,
-                'color' => $n->color,
-                'read_at' => $n->read_at,
+                'id'         => $n->id,
+                'type'       => $n->type,
+                'title'      => $n->title,
+                'message'    => $n->message,
+                'data'       => $n->data,
+                'priority'   => $n->priority,
+                'color'      => $n->color,
+                'read_at'    => $n->read_at,
                 'created_at' => $n->created_at,
             ]);
 
@@ -54,28 +51,14 @@ class NotificationController extends Controller
 
     public function getUnreadCount(Request $request)
     {
-        $user = auth()->user();
-        $count = $user->notifications()->whereNull('read_at')->count();
+        $count = auth()->user()->notifications()->whereNull('read_at')->count();
         return response()->json(['count' => $count]);
     }
 
     public function markAsRead(Request $request, $id)
     {
-        $user = auth()->user();
-        $notification = $user->notifications()->find($id);
-        
-        if ($notification) {
-            $notification->update(['read_at' => now()]);
-        }
+        $notification = auth()->user()->notifications()->find($id);
 
-        return response()->json(['success' => true]);
-    }
-
-    public function markAsReadApi(Request $request, $id)
-    {
-        $user = auth()->user();
-        $notification = $user->notifications()->find($id);
-        
         if ($notification) {
             $notification->update(['read_at' => now()]);
         }
@@ -85,35 +68,14 @@ class NotificationController extends Controller
 
     public function markAllAsRead(Request $request)
     {
-        $user = auth()->user();
-        $user->notifications()->whereNull('read_at')->update(['read_at' => now()]);
-        return response()->json(['success' => true]);
-    }
-
-    public function markAllAsReadApi(Request $request)
-    {
-        $user = auth()->user();
-        $user->notifications()->whereNull('read_at')->update(['read_at' => now()]);
+        auth()->user()->notifications()->whereNull('read_at')->update(['read_at' => now()]);
         return response()->json(['success' => true]);
     }
 
     public function destroy(Request $request, $id)
     {
-        $user = auth()->user();
-        $notification = $user->notifications()->find($id);
-        
-        if ($notification) {
-            $notification->delete();
-        }
+        $notification = auth()->user()->notifications()->find($id);
 
-        return response()->json(['success' => true]);
-    }
-
-    public function destroyApi(Request $request, $id)
-    {
-        $user = auth()->user();
-        $notification = $user->notifications()->find($id);
-        
         if ($notification) {
             $notification->delete();
         }

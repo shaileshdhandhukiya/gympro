@@ -42,15 +42,13 @@ class Notification extends Model
         return $query->whereNotNull('read_at');
     }
 
-    public function scopeForUser($query, $userId)
+    public function scopeForUser($query, $userId, bool $isMember = false)
     {
-        $user = User::find($userId);
-        
-        if ($user && $user->isMember()) {
+        if ($isMember) {
             return $query->where('user_id', $userId);
         }
-        
-        return $query->where(function($q) use ($userId) {
+
+        return $query->where(function ($q) use ($userId) {
             $q->where('user_id', $userId)->orWhereNull('user_id');
         });
     }

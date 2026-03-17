@@ -19,7 +19,7 @@ export default function AppSidebarLayout({
     return (
         <AppShell variant="sidebar">
             {isMember ? <MemberSidebar /> : <AppSidebar />}
-            <AppContent variant="sidebar" className="overflow-x-hidden">
+            <AppContent variant="sidebar">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 <div className={isMember ? "pb-20 md:pb-0" : ""}>
                     {children}

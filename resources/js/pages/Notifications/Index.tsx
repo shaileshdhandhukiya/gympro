@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, Trash2, Archive, Clock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Bell, Check, Trash2, Clock, CheckCheck, Inbox, AlertCircle } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
+import StatusBadge from '@/components/shared/status-badge';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Notifications', href: '/notifications' },
@@ -39,6 +41,7 @@ interface Props {
 export default function NotificationsIndex({ notifications }: Props) {
     const { props } = usePage();
     const [isLoading, setIsLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('all');
 
     const getCsrfToken = () => (props as any).csrf_token || '';
 
@@ -100,19 +103,28 @@ export default function NotificationsIndex({ notifications }: Props) {
     };
 
     const hasUnread = notifications.data.some(n => !n.read_at);
+    const unreadCount = notifications.data.filter(n => !n.read_at).length;
+    
     const formatTime = (date: string) => {
         const d = new Date(date);
         const now = new Date();
         const diff = now.getTime() - d.getTime();
         const mins = Math.floor(diff / 60000);
         const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
         
-        if (mins < 1) return 'just now';
+        if (mins < 1) return 'Just now';
         if (mins < 60) return `${mins}m ago`;
         if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
         
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
+
+    // Filter notifications based on active tab
+    const filteredNotifications = activeTab === 'unread' 
+        ? notifications.data.filter(n => !n.read_at)
+        : notifications.data;
 
     // Grouping
     const today = new Date();
@@ -128,89 +140,105 @@ export default function NotificationsIndex({ notifications }: Props) {
     };
 
     const groupedNotifications = {
-        today: notifications.data.filter(n => isToday(n.created_at)),
-        yesterday: notifications.data.filter(n => isYesterday(n.created_at)),
-        older: notifications.data.filter(n => !isToday(n.created_at) && !isYesterday(n.created_at)),
+        today: filteredNotifications.filter(n => isToday(n.created_at)),
+        yesterday: filteredNotifications.filter(n => isYesterday(n.created_at)),
+        older: filteredNotifications.filter(n => !isToday(n.created_at) && !isYesterday(n.created_at)),
+    };
+
+    const getPriorityIcon = (priority: string) => {
+        if (priority === 'high') return <AlertCircle className="h-5 w-5" />;
+        return <Bell className="h-5 w-5" />;
     };
 
     const renderGroup = (title: string, group: Notification[]) => {
         if (group.length === 0) return null;
 
         return (
-            <div className="mb-6 space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pl-1">{title}</h3>
-                <Card className="overflow-hidden border-2 shadow-sm rounded-xl py-0">
-                    <CardContent className="p-0 flex flex-col divide-y">
-                        {group.map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={`flex items-start gap-4 p-5 transition-all duration-200 group relative ${
-                                    !notification.read_at
-                                        ? 'bg-blue-50/50 dark:bg-blue-950/20'
-                                        : 'bg-card hover:bg-muted/50'
-                                }`}
-                            >
-                                {/* Indicator line for unread */}
-                                {!notification.read_at && (
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-l-xl" />
-                                )}
+            <div className="mb-6 space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">{title}</h3>
+                <div className="space-y-2">
+                    {group.map((notification) => (
+                        <Card
+                            key={notification.id}
+                            className={`group relative overflow-hidden transition-all duration-200 hover:shadow-md ${
+                                !notification.read_at
+                                    ? 'border-l-4 border-l-primary bg-primary/5'
+                                    : 'hover:bg-muted/50'
+                            }`}
+                        >
+                            <CardContent className="p-4">
+                                <div className="flex items-start gap-4">
+                                    {/* Icon */}
+                                    <div 
+                                        className="mt-0.5 flex items-center justify-center h-10 w-10 rounded-full flex-shrink-0 transition-transform group-hover:scale-110"
+                                        style={{ 
+                                            backgroundColor: notification.color ? `${notification.color}15` : 'hsl(var(--primary) / 0.1)',
+                                            color: notification.color || 'hsl(var(--primary))'
+                                        }}
+                                    >
+                                        {getPriorityIcon(notification.priority)}
+                                    </div>
 
-                                {/* Icon based on priority/color */}
-                                <div className={`mt-1 flex items-center justify-center h-10 w-10 rounded-full bg-background border flex-shrink-0 shadow-sm`} style={{ borderColor: notification.color || '#e2e8f0', color: notification.color || '#3b82f6' }}>
-                                    <Bell className="h-5 w-5" />
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1 min-w-0 pr-10">
-                                    <div className="flex items-start justify-between gap-3 mb-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <p className={`font-semibold text-base leading-tight ${!notification.read_at ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                                {notification.title}
-                                            </p>
-                                            {notification.priority === 'high' && (
-                                                <Badge variant="destructive" className="h-5 text-[10px] uppercase font-bold px-1.5">High</Badge>
-                                            )}
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0 space-y-1">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className={`font-semibold text-sm leading-tight ${
+                                                    !notification.read_at ? 'text-foreground' : 'text-muted-foreground'
+                                                }`}>
+                                                    {notification.title}
+                                                </h4>
+                                                {notification.priority === 'high' && (
+                                                    <Badge variant="destructive" className="h-5 text-[10px] font-semibold px-2">
+                                                        High Priority
+                                                    </Badge>
+                                                )}
+                                                {!notification.read_at && (
+                                                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        <p className={`text-sm leading-relaxed ${
+                                            !notification.read_at ? 'text-foreground/80' : 'text-muted-foreground'
+                                        }`}>
+                                            {notification.message}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                                            <Clock className="h-3.5 w-3.5" />
+                                            <span>{formatTime(notification.created_at)}</span>
                                         </div>
                                     </div>
-                                    <p className={`text-sm mb-2 ${!notification.read_at ? 'text-foreground/90' : 'text-muted-foreground'} pr-4`}>
-                                        {notification.message}
-                                    </p>
-                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                        <Clock className="h-3 w-3" />
-                                        <span>{formatTime(notification.created_at)}</span>
-                                        {title === 'Older' && <span>• {new Date(notification.created_at).toLocaleDateString()}</span>}
-                                    </div>
-                                </div>
 
-                                {/* Actions - fade in on group hover */}
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm p-1.5 rounded-lg border shadow-sm">
-                                    {!notification.read_at && (
+                                    {/* Actions */}
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {!notification.read_at && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => markAsRead(notification.id)}
+                                                disabled={isLoading}
+                                                className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                                                title="Mark as read"
+                                            >
+                                                <Check className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => markAsRead(notification.id)}
+                                            onClick={() => deleteNotification(notification.id)}
                                             disabled={isLoading}
-                                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                            title="Mark as read"
+                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            title="Delete"
                                         >
-                                            <Check className="h-4 w-4" />
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => deleteNotification(notification.id)}
-                                        disabled={isLoading}
-                                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        title="Delete"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             </div>
         );
     };
@@ -219,53 +247,91 @@ export default function NotificationsIndex({ notifications }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Notifications" />
 
-            <div className="max-w-4xl mx-auto px-4 py-10">
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary/10 rounded-xl">
-                            <Bell className="h-8 w-8 text-primary" />
+            <div className="container mx-auto px-4 py-6 max-w-5xl">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2.5 bg-primary/10 rounded-lg">
+                            <Bell className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight">Notifications</h1>
-                            <p className="text-muted-foreground mt-1 text-sm font-medium">
-                                You have {notifications.data.filter(n => !n.read_at).length} unread out of {notifications.meta.total} total
+                            <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                {unreadCount > 0 ? (
+                                    <span className="font-medium">{unreadCount} unread</span>
+                                ) : (
+                                    <span>All caught up!</span>
+                                )} • {notifications.meta.total} total
                             </p>
                         </div>
                     </div>
+                </div>
+
+                {/* Tabs and Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+                        <TabsList className="grid w-full sm:w-auto grid-cols-2">
+                            <TabsTrigger value="all" className="gap-2">
+                                <Inbox className="h-4 w-4" />
+                                All
+                                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                                    {notifications.data.length}
+                                </Badge>
+                            </TabsTrigger>
+                            <TabsTrigger value="unread" className="gap-2">
+                                <Bell className="h-4 w-4" />
+                                Unread
+                                {unreadCount > 0 && (
+                                    <Badge variant="default" className="ml-1 h-5 px-1.5 text-xs">
+                                        {unreadCount}
+                                    </Badge>
+                                )}
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+
                     {hasUnread && (
                         <Button
-                            variant="secondary"
+                            variant="outline"
+                            size="sm"
                             onClick={markAllAsRead}
                             disabled={isLoading}
-                            className="shadow-sm font-medium"
+                            className="gap-2"
                         >
-                            <Check className="h-4 w-4 mr-2" />
-                            Mark all as read
+                            <CheckCheck className="h-4 w-4" />
+                            Mark all read
                         </Button>
                     )}
                 </div>
 
                 {/* Notifications List */}
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {notifications.data.length === 0 ? (
-                        <Card className="border-dashed shadow-none py-16">
-                            <CardContent className="flex flex-col items-center justify-center text-center">
+                <div className="space-y-6">
+                    {filteredNotifications.length === 0 ? (
+                        <Card className="border-dashed">
+                            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                                 <div className="p-4 bg-muted/50 rounded-full mb-4">
-                                    <Bell className="h-10 w-10 text-muted-foreground opacity-30" />
+                                    {activeTab === 'unread' ? (
+                                        <CheckCheck className="h-10 w-10 text-muted-foreground/50" />
+                                    ) : (
+                                        <Bell className="h-10 w-10 text-muted-foreground/50" />
+                                    )}
                                 </div>
-                                <h3 className="text-lg font-semibold mb-1">You're all caught up!</h3>
-                                <p className="text-muted-foreground max-w-sm">
-                                    When you get important updates, activity, or mentions, they'll show up here.
+                                <h3 className="text-lg font-semibold mb-1">
+                                    {activeTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+                                </h3>
+                                <p className="text-sm text-muted-foreground max-w-sm">
+                                    {activeTab === 'unread' 
+                                        ? "You're all caught up! Check back later for new updates."
+                                        : 'When you receive notifications, they will appear here.'}
                                 </p>
                             </CardContent>
                         </Card>
                     ) : (
-                        <div>
+                        <>
                             {renderGroup('Today', groupedNotifications.today)}
                             {renderGroup('Yesterday', groupedNotifications.yesterday)}
                             {renderGroup('Older', groupedNotifications.older)}
-                        </div>
+                        </>
                     )}
                 </div>
 

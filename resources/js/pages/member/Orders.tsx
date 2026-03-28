@@ -3,10 +3,10 @@ import AppLayout from '@/layouts/app-layout';
 import { Member, Payment, PageProps } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Download, CreditCard, TrendingUp, Clock, ArrowLeft } from 'lucide-react';
 import { formatDate } from '@/lib/date-utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import StatusBadge from '@/components/shared/status-badge';
 
 interface Props extends PageProps {
     member: Member;
@@ -25,16 +25,6 @@ interface Props extends PageProps {
 }
 
 export default function Orders({ member, payments, stats }: Props) {
-    const getStatusBadge = (status: string) => {
-        const variants = {
-            completed: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800',
-            pending: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-800',
-            failed: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800',
-            refunded: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-400 dark:border-gray-800',
-        };
-        return variants[status as keyof typeof variants] || variants.pending;
-    };
-
     return (
         <AppLayout>
             <Head title="My Orders" />
@@ -124,9 +114,7 @@ export default function Orders({ member, payments, stats }: Props) {
                                                     <TableCell className="capitalize text-sm">{payment.payment_type}</TableCell>
                                                     <TableCell className="text-sm">{formatDate(payment.payment_date)}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant="outline" className={getStatusBadge(payment.status)}>
-                                                            {payment.status}
-                                                        </Badge>
+                                                        <StatusBadge status={payment.status} />
                                                     </TableCell>
                                                     <TableCell>
                                                         {payment.status === 'completed' && (

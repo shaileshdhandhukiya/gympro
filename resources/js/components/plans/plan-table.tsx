@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pencil, Trash2, Eye } from 'lucide-react';
+import StatusBadge, { badgeVariants } from '@/components/shared/status-badge';
 
 interface Props {
     plans: Plan[];
@@ -18,14 +19,12 @@ const shiftLabels = {
 };
 
 const featureColors = [
-    'border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-950',
-    'border-yellow-200 text-yellow-700 bg-yellow-50 dark:border-yellow-800 dark:text-yellow-400 dark:bg-yellow-950',
-    'border-red-200 text-red-700 bg-red-50 dark:border-red-800 dark:text-red-400 dark:bg-red-950',
-    'border-blue-200 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:bg-blue-950',
-    'border-purple-200 text-purple-700 bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:bg-purple-950',
-    'border-orange-200 text-orange-700 bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:bg-orange-950',
-    'border-indigo-200 text-indigo-700 bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:bg-indigo-950',
-    'border-cyan-200 text-cyan-700 bg-cyan-50 dark:border-cyan-800 dark:text-cyan-400 dark:bg-cyan-950',
+    badgeVariants.success,
+    badgeVariants.warning,
+    badgeVariants.danger,
+    badgeVariants.info,
+    badgeVariants.purple,
+    badgeVariants.orange,
 ];
 
 const getFeatureColor = (featureId: number) => {
@@ -55,18 +54,7 @@ export default function PlanTable({ plans, onView, onEdit, onDelete }: Props) {
                         <TableCell>{plan.duration_months} month{plan.duration_months > 1 ? 's' : ''}</TableCell>
                         <TableCell>₹{plan.price}</TableCell>
                         <TableCell>
-                            <Badge 
-                                variant="outline"
-                                className={
-                                    plan.shift === 'morning'
-                                        ? 'border-blue-200 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:bg-blue-950'
-                                        : plan.shift === 'evening'
-                                        ? 'border-purple-200 text-purple-700 bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:bg-purple-950'
-                                        : 'border-orange-200 text-orange-700 bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:bg-orange-950'
-                                }
-                            >
-                                {shiftLabels[plan.shift]}
-                            </Badge>
+                            <StatusBadge status={plan.shift} />
                         </TableCell>
                         <TableCell>
                             <div className="flex flex-wrap gap-1">
@@ -82,16 +70,7 @@ export default function PlanTable({ plans, onView, onEdit, onDelete }: Props) {
                             </div>
                         </TableCell>
                         <TableCell>
-                            <Badge 
-                                variant="outline"
-                                className={
-                                    plan.status === 'active'
-                                        ? 'border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-950'
-                                        : 'border-gray-200 text-gray-700 bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:bg-gray-950'
-                                }
-                            >
-                                {plan.status}
-                            </Badge>
+                            <StatusBadge status={plan.status} />
                         </TableCell>
                         {(onView || onEdit || onDelete) && (
                             <TableCell className="text-right">

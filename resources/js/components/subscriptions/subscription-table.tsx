@@ -1,26 +1,14 @@
 import { Subscription } from '@/types';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pencil, Trash2 } from 'lucide-react';
+import StatusBadge from '@/components/shared/status-badge';
 
 interface Props {
     subscriptions: Subscription[];
     onEdit?: (subscription: Subscription) => void;
     onDelete?: (subscription: Subscription) => void;
 }
-
-const statusColors = {
-    active: 'bg-green-500',
-    expired: 'bg-red-500',
-    cancelled: 'bg-gray-500',
-};
-
-const paymentColors = {
-    paid: 'bg-green-500',
-    pending: 'bg-yellow-500',
-    overdue: 'bg-red-500',
-};
 
 export default function SubscriptionTable({ subscriptions, onEdit, onDelete }: Props) {
     return (
@@ -48,32 +36,10 @@ export default function SubscriptionTable({ subscriptions, onEdit, onDelete }: P
                         <TableCell>{new Date(subscription.end_date).toLocaleDateString()}</TableCell>
                         <TableCell>₹{subscription.total_paid}</TableCell>
                         <TableCell>
-                            <Badge 
-                                variant="outline" 
-                                className={
-                                    subscription.payment_status === 'paid' 
-                                        ? 'border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-950'
-                                        : subscription.payment_status === 'pending'
-                                        ? 'border-yellow-200 text-yellow-700 bg-yellow-50 dark:border-yellow-800 dark:text-yellow-400 dark:bg-yellow-950'
-                                        : 'border-red-200 text-red-700 bg-red-50 dark:border-red-800 dark:text-red-400 dark:bg-red-950'
-                                }
-                            >
-                                {subscription.payment_status}
-                            </Badge>
+                            <StatusBadge status={subscription.payment_status} />
                         </TableCell>
                         <TableCell>
-                            <Badge 
-                                variant="outline"
-                                className={
-                                    subscription.status === 'active'
-                                        ? 'border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-950'
-                                        : subscription.status === 'expired'
-                                        ? 'border-red-200 text-red-700 bg-red-50 dark:border-red-800 dark:text-red-400 dark:bg-red-950'
-                                        : 'border-gray-200 text-gray-700 bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:bg-gray-950'
-                                }
-                            >
-                                {subscription.status}
-                            </Badge>
+                            <StatusBadge status={subscription.status} />
                         </TableCell>
                         {(onEdit || onDelete) && (
                             <TableCell className="text-right">

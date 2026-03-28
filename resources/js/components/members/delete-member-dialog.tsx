@@ -1,7 +1,4 @@
-import { useForm } from '@inertiajs/react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import DeleteDialog from '@/components/shared/delete-dialog';
 import { Member } from '@/types';
 
 interface Props {
@@ -11,38 +8,13 @@ interface Props {
 }
 
 export default function DeleteMemberDialog({ open, onOpenChange, member }: Props) {
-    const { delete: destroy, processing } = useForm();
-
-    const handleDelete = () => {
-        destroy(`/members/${member.id}`, {
-            onSuccess: () => {
-                onOpenChange(false);
-                toast.success('Member deleted successfully');
-            },
-            onError: () => {
-                toast.error('Failed to delete member');
-            },
-        });
-    };
-
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Delete Member</DialogTitle>
-                    <DialogDescription>
-                        Are you sure you want to delete "{member.name}"? This action cannot be undone.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={processing}>
-                        Delete
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <DeleteDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            itemName={member.user?.name || 'this member'}
+            entityType="Member"
+            route={`/members/${member.id}`}
+        />
     );
 }

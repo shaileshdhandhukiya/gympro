@@ -103,38 +103,6 @@ export default function Profile({
                     <Card>
                         <CardContent className="pt-6">
                             <form onSubmit={submit} className="space-y-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
-
-                            <Input
-                                id="name"
-                                className="mt-1 block w-full"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                required
-                                autoComplete="name"
-                                placeholder="Full name"
-                            />
-
-                            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="phone">Phone Number</Label>
-
-                            <Input
-                                id="phone"
-                                type="tel"
-                                className="mt-1 block w-full"
-                                value={data.phone}
-                                onChange={(e) => setData('phone', e.target.value)}
-                                autoComplete="tel"
-                                placeholder="Phone number"
-                            />
-
-                            {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-                        </div>
-
                         <div className="space-y-4">
                             <Label>Profile Picture</Label>
                             <div className="flex items-center gap-4">
@@ -178,6 +146,38 @@ export default function Profile({
                                 JPG, PNG or GIF. Max size 2MB.
                             </p>
                             {errors.profile_image && <p className="text-sm text-destructive">{errors.profile_image}</p>}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Name</Label>
+
+                            <Input
+                                id="name"
+                                className="mt-1 block w-full"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                required
+                                autoComplete="name"
+                                placeholder="Full name"
+                            />
+
+                            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="phone">Phone Number</Label>
+
+                            <Input
+                                id="phone"
+                                type="tel"
+                                className="mt-1 block w-full"
+                                value={data.phone}
+                                onChange={(e) => setData('phone', e.target.value)}
+                                autoComplete="tel"
+                                placeholder="Phone number"
+                            />
+
+                            {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
                         </div>
 
                         <div className="grid gap-2">

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\Setting;
 use App\Notifications\NewSubscriptionAdminNotification;
 use App\Notifications\PaymentConfirmedNotification;
 use Illuminate\Support\Facades\DB;
@@ -134,8 +135,17 @@ class PaymentService
     public function generateInvoice(Payment $payment): \Illuminate\Http\Response
     {
         $payment->load(['subscription.member.user', 'subscription.plan']);
+        
+        $settings = [
+            'app_name' => Setting::get('app_name', 'GYM PRO'),
+            'currency_symbol' => Setting::get('currency_symbol', 'Rs.'),
+            'business_name' => Setting::get('business_name'),
+            'business_address' => Setting::get('business_address'),
+            'business_phone' => Setting::get('business_phone'),
+            'business_email' => Setting::get('business_email'),
+        ];
 
-        $pdf = Pdf::loadView('invoices.payment', compact('payment'));
+        $pdf = Pdf::loadView('invoices.payment', compact('payment', 'settings'));
         return $pdf->download('invoice-' . $payment->invoice_number . '.pdf');
     }
 

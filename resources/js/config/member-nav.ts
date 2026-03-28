@@ -1,4 +1,4 @@
-import { LayoutGrid, Calendar, ShoppingCart, User } from 'lucide-react';
+import { LayoutGrid, Calendar, ShoppingCart, User, Receipt } from 'lucide-react';
 import { type NavItem } from '@/types';
 
 export const memberNavItems: NavItem[] = [
@@ -11,6 +11,11 @@ export const memberNavItems: NavItem[] = [
         title: 'My Attendance',
         href: '/member/attendance',
         icon: Calendar,
+    },
+    {
+        title: 'My Orders',
+        href: '/member/orders',
+        icon: Receipt,
     },
     {
         title: 'Plans',

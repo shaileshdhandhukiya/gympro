@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Invoice {{ $payment->invoice_number }}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
+        body { font-family: DejaVu Sans, sans-serif; margin: 40px; }
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { margin: 0; color: #333; }
         .invoice-info { margin-bottom: 30px; }
@@ -70,14 +70,14 @@
                     </td>
                     <td>{{ strtoupper(str_replace('_', ' ', $payment->payment_method)) }}</td>
                     <td>{{ ucfirst($payment->payment_type) }}</td>
-                    <td>₹{{ number_format($payment->amount, 2) }}</td>
+                    <td>Rs. {{ number_format($payment->amount, 2) }}</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
     <div class="total">
-        Total Amount: ₹{{ number_format($payment->amount, 2) }}
+        Total Amount: Rs. {{ number_format($payment->amount, 2) }}
     </div>
 
     @if($payment->notes)

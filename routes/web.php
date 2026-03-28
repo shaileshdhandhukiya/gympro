@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('member/dashboard', [MemberDashboardController::class, 'index'])->name('member.dashboard');
     Route::get('member/attendance', [MemberDashboardController::class, 'attendance'])->name('member.attendance');
+    Route::get('member/orders', [MemberDashboardController::class, 'orders'])->name('member.orders');
     Route::get('member/plans', [MemberPlanController::class, 'index'])->name('member.plans');
     Route::get('member/plans/{plan}/checkout', [\App\Http\Controllers\PhonePePaymentController::class, 'checkout'])->name('member.plans.checkout');
     Route::get('member/plans/{plan}/pay', [\App\Http\Controllers\PhonePePaymentController::class, 'initiatePayment'])->name('member.plans.pay');

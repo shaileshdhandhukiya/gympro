@@ -130,6 +130,48 @@ class MemberDashboardController extends Controller
         ]);
     }
 
+    public function orders(Request $request)
+    {
+        // Check if user has member role
+        if (!auth()->user()->hasPermission('view_member_dashboard')) {
+            abort(403, 'Unauthorized. Member access only.');
+        }
+
+        $user = auth()->user();
+        $member = Member::where('user_id', $user->id)->first();
+
+        if (!$member) {
+            abort(404, 'Member profile not found. Please contact admin.');
+        }
+
+        // Get all subscriptions for this member
+        $allSubscriptions = Subscription::where('member_id', $member->id)
+            ->pluck('id');
+        
+        // Get all payments with pagination
+        $payments = Payment::whereIn('subscription_id', $allSubscriptions)
+            ->with(['subscription.plan'])
+            ->orderBy('payment_date', 'desc')
+            ->paginate(10);
+
+        // Calculate stats
+        $stats = [
+            'total_spent' => Payment::whereIn('subscription_id', $allSubscriptions)
+                ->where('status', 'completed')
+                ->sum('amount'),
+            'total_orders' => Payment::whereIn('subscription_id', $allSubscriptions)->count(),
+            'pending_payments' => Payment::whereIn('subscription_id', $allSubscriptions)
+                ->where('status', 'pending')
+                ->count(),
+        ];
+
+        return Inertia::render('member/Orders', [
+            'member' => $member,
+            'payments' => $payments,
+            'stats' => $stats,
+        ]);
+    }
+
     private function calculateStreak($memberId)
     {
         // Get unique attendance dates

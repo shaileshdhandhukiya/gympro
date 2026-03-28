@@ -110,8 +110,12 @@ export default function ViewMemberModal({ open, onOpenChange, member }: Props) {
                                         <span className="font-medium">{new Date(member.subscriptions[0].end_date).toLocaleDateString()}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">Amount: </span>
-                                        <span className="font-medium">₹{member.subscriptions[0].amount}</span>
+                                        <span className="text-muted-foreground">Plan Price: </span>
+                                        <span className="font-medium">₹{member.subscriptions[0].plan?.price}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Amount Paid: </span>
+                                        <span className="font-medium">₹{member.subscriptions[0].amount_paid}</span>
                                     </div>
                                 </div>
                             </div>

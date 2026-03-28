@@ -71,6 +71,7 @@ export interface Member {
     status: 'active' | 'inactive' | 'expired';
     notes: string | null;
     user?: User;
+    subscriptions?: Subscription[];
     created_at: string;
     updated_at: string;
 }

@@ -10,35 +10,11 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { LayoutGrid, Calendar, ShoppingCart, Activity } from 'lucide-react';
+import { memberNavItems } from '@/config/member-nav';
 import AppLogo from '../app-logo';
 
-const memberNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/member/dashboard',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'My Workouts',
-        href: '/member/workouts',
-        icon: Activity,
-    },
-    {
-        title: 'My Attendance',
-        href: '/member/attendance',
-        icon: Calendar,
-    },
-    {
-        title: 'Buy Plans',
-        href: '/member/plans',
-        icon: ShoppingCart,
-    },
-];
-
-const footerNavItems: NavItem[] = [];
+const footerNavItems = [];
 
 export function MemberSidebar() {
     return (
@@ -60,7 +36,6 @@ export function MemberSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

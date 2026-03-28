@@ -1,10 +1,11 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, Crown } from 'lucide-react';
+import { formatDate } from '@/lib/date-utils';
 
 interface Plan {
     id: number;
@@ -94,9 +95,15 @@ export default function Plans({ plans, activeSubscription, member, phonepeEnable
                     <Button 
                         className="w-full" 
                         disabled={isActive || !phonepeEnabled}
-                        onClick={() => window.location.href = `/member/plans/${plan.id}/checkout`}
+                        asChild={!isActive && phonepeEnabled}
                     >
-                        {isActive ? 'Current Plan' : phonepeEnabled ? 'Buy Now' : 'Payment Disabled'}
+                        {isActive ? (
+                            'Current Plan'
+                        ) : phonepeEnabled ? (
+                            <Link href={`/member/plans/${plan.id}/checkout`}>Buy Now</Link>
+                        ) : (
+                            'Payment Disabled'
+                        )}
                     </Button>
                 </CardFooter>
             </Card>
@@ -126,7 +133,7 @@ export default function Plans({ plans, activeSubscription, member, phonepeEnable
                                 <div>
                                     <p className="font-semibold">{activeSubscription.plan.name}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Valid until {new Date(activeSubscription.end_date).toLocaleDateString()}
+                                        Valid until {formatDate(activeSubscription.end_date)}
                                     </p>
                                 </div>
                                 <Badge variant="outline">Active</Badge>
@@ -148,8 +155,11 @@ export default function Plans({ plans, activeSubscription, member, phonepeEnable
                             ))}
                         </div>
                         {monthlyPlans.length === 0 && (
-                            <div className="text-center py-12 text-muted-foreground">
-                                No monthly plans available
+                            <div className="text-center py-12">
+                                <p className="text-muted-foreground mb-4">No monthly plans available</p>
+                                <Link href="/member/dashboard">
+                                    <Button variant="outline">Back to Dashboard</Button>
+                                </Link>
                             </div>
                         )}
                     </TabsContent>
@@ -161,8 +171,11 @@ export default function Plans({ plans, activeSubscription, member, phonepeEnable
                             ))}
                         </div>
                         {yearlyPlans.length === 0 && (
-                            <div className="text-center py-12 text-muted-foreground">
-                                No yearly plans available
+                            <div className="text-center py-12">
+                                <p className="text-muted-foreground mb-4">No yearly plans available</p>
+                                <Link href="/member/dashboard">
+                                    <Button variant="outline">Back to Dashboard</Button>
+                                </Link>
                             </div>
                         )}
                     </TabsContent>

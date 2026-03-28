@@ -1,12 +1,13 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import { Member, Subscription, Payment, Attendance, PageProps } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, CreditCard, TrendingUp, Download, User, ArrowRight, LogIn, LogOut, Clock } from 'lucide-react';
+import { Calendar, CreditCard, Download, User, ArrowRight, LogIn, LogOut, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { formatDate, formatTime, calculateTimeDifference } from '@/lib/date-utils';
 
 interface Props extends PageProps {
     member: Member;
@@ -22,6 +23,7 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
     const [processing, setProcessing] = useState(false);
    
     const handleCheckIn = () => {
+        if (processing) return;
         setProcessing(true);
         router.post('/attendances', {
             member_id: member.id,
@@ -37,12 +39,16 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
             },
             onFinish: () => {
                 setProcessing(false);
-            }
+            },
+            preserveScroll: true,
         });
     };
 
     const handleCheckOut = () => {
-        if (!lastCheckIn) return;
+        if (!lastCheckIn || processing) return;
+        
+        if (!confirm('Are you sure you want to check out?')) return;
+        
         setProcessing(true);
         router.put(`/attendances/${lastCheckIn.id}`, {
             check_out_time: new Date().toTimeString().split(' ')[0]
@@ -55,7 +61,8 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
             },
             onFinish: () => {
                 setProcessing(false);
-            }
+            },
+            preserveScroll: true,
         });
     };
     const statusColors = {
@@ -116,13 +123,13 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                                     <div>
                                         <p className="text-sm text-muted-foreground">Start Date</p>
                                         <p className="text-lg font-semibold">
-                                            {new Date(currentSubscription.start_date).toLocaleDateString()}
+                                            {formatDate(currentSubscription.start_date)}
                                         </p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">End Date</p>
                                         <p className="text-lg font-semibold">
-                                            {new Date(currentSubscription.end_date).toLocaleDateString()}
+                                            {formatDate(currentSubscription.end_date)}
                                         </p>
                                     </div>
                                 </div>
@@ -133,7 +140,9 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                         ) : (
                             <div className="text-center py-8">
                                 <p className="text-muted-foreground mb-4">You don't have an active subscription</p>
-                                <Button>Contact Admin</Button>
+                                <Link href="/member/plans">
+                                    <Button>View Plans</Button>
+                                </Link>
                             </div>
                         )}
                     </CardContent>
@@ -186,14 +195,7 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                             <div className="mt-4 p-3 bg-muted rounded-lg flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                                 <p className="text-sm text-muted-foreground">
-                                    Total time today: {(() => {
-                                        const checkIn = new Date(`2000-01-01 ${lastCheckIn.check_in_time}`);
-                                        const checkOut = new Date(`2000-01-01 ${lastCheckIn.check_out_time}`);
-                                        const diff = Math.abs(checkOut.getTime() - checkIn.getTime());
-                                        const hours = Math.floor(diff / 3600000);
-                                        const minutes = Math.floor((diff % 3600000) / 60000);
-                                        return `${hours}h ${minutes}m`;
-                                    })()}
+                                    Total time today: {calculateTimeDifference(lastCheckIn.check_in_time, lastCheckIn.check_out_time)}
                                 </p>
                             </div>
                         )}
@@ -204,7 +206,8 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                 {/* Stats Grid */}
                 <div className="grid gap-4 md:grid-cols-2">
                     {/* Attendance Card */}
-                    <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => window.location.href = '/member/attendance'}>
+                    <Card className="cursor-pointer hover:border-primary transition-colors">
+                        <Link href="/member/attendance">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Attendance This Month</CardTitle>
                             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -213,13 +216,14 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                             <div className="text-2xl font-bold">{attendanceThisMonth} days</div>
                             {lastCheckIn && (
                                 <p className="text-xs text-muted-foreground mt-2">
-                                    Last check-in: {new Date(lastCheckIn.date).toLocaleDateString()} at {lastCheckIn.check_in_time}
+                                    Last check-in: {formatDate(lastCheckIn.date)} at {formatTime(lastCheckIn.check_in_time)}
                                 </p>
                             )}
                             <Button variant="link" className="p-0 h-auto mt-2">
                                 View Full History <ArrowRight className="h-3 w-3 ml-1" />
                             </Button>
                         </CardContent>
+                        </Link>
                     </Card>
 
                     {/* Profile Card */}
@@ -232,7 +236,7 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                             <div className="space-y-1">
                                 <p className="text-sm"><span className="text-muted-foreground">Email:</span> {member.email}</p>
                                 <p className="text-sm"><span className="text-muted-foreground">Phone:</span> {member.phone}</p>
-                                <p className="text-sm"><span className="text-muted-foreground">Member Since:</span> {new Date(member.join_date).toLocaleDateString()}</p>
+                                <p className="text-sm"><span className="text-muted-foreground">Member Since:</span> {formatDate(member.join_date)}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -257,7 +261,7 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                                         <div className="flex-1">
                                             <p className="font-medium">{payment.invoice_number}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {payment.subscription?.plan?.name || 'N/A'} • {new Date(payment.payment_date).toLocaleDateString()} • {payment.payment_method.toUpperCase()}
+                                                {payment.subscription?.plan?.name || 'N/A'} • {formatDate(payment.payment_date)} • {payment.payment_method.toUpperCase()}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -268,7 +272,8 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => window.open(`/payments/${payment.id}/invoice`, '_blank')}
+                                                onClick={() => router.visit(`/payments/${payment.id}/invoice`)}
+                                                aria-label="Download invoice"
                                             >
                                                 <Download className="h-4 w-4" />
                                             </Button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import { Member, PageProps } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,8 +52,8 @@ export default function Attendance({ member, attendances, stats, year, month }: 
                         <h1 className="text-3xl font-bold">My Attendance</h1>
                         <p className="text-muted-foreground">Track your gym visits</p>
                     </div>
-                    <Button variant="outline" onClick={() => router.get('/member/dashboard')}>
-                        Back to Dashboard
+                    <Button variant="outline" asChild>
+                        <Link href="/member/dashboard">Back to Dashboard</Link>
                     </Button>
                 </div>
 
@@ -93,7 +93,7 @@ export default function Attendance({ member, attendances, stats, year, month }: 
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>Attendance Calendar</CardTitle>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 hidden">
                                 <Button variant="outline" size="icon" onClick={() => handleMonthChange('prev')}>
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
@@ -116,13 +116,27 @@ export default function Attendance({ member, attendances, stats, year, month }: 
                             .rdp-day_present button:hover {
                                 background-color: #16a34a !important;
                             }
+                            @media (max-width: 640px) {
+                                .rdp {
+                                    --rdp-cell-size: 36px;
+                                    font-size: 0.875rem;
+                                }
+                                .rdp-caption {
+                                    font-size: 0.875rem;
+                                }
+                            }
+                            @media (min-width: 641px) and (max-width: 768px) {
+                                .rdp {
+                                    --rdp-cell-size: 42px;
+                                }
+                            }
                         `}</style>
-                        <div className="flex justify-center">
+                        <div className="flex justify-center overflow-x-auto">
                             <Calendar
                                 mode="single"
                                 month={currentDate}
                                 onMonthChange={setCurrentDate}
-                                className="rounded-lg border [--cell-size:--spacing(14)] md:[--cell-size:--spacing(16)]"
+                                className="rounded-lg border w-full max-w-full sm:max-w-md md:max-w-lg"
                                 buttonVariant="ghost"
                                 modifiers={{
                                     present: (date) => isAttendanceDate(date),
@@ -132,13 +146,13 @@ export default function Attendance({ member, attendances, stats, year, month }: 
                                 }}
                             />
                         </div>
-                        <div className="flex items-center justify-center gap-6 mt-6">
+                        <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 rounded bg-green-500"></div>
                                 <span className="text-sm">Present</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded bg-gray-200"></div>
+                                <div className="w-4 h-4 rounded bg-gray-200 dark:bg-gray-700"></div>
                                 <span className="text-sm">Absent</span>
                             </div>
                         </div>

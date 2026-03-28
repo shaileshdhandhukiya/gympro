@@ -3,12 +3,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, Check, Trash2, Clock, CheckCheck, Inbox, AlertCircle } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
-import StatusBadge from '@/components/shared/status-badge';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Notifications', href: '/notifications' },

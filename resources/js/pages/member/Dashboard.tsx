@@ -8,6 +8,14 @@ import { Calendar, CreditCard, Download, User, ArrowRight, LogIn, LogOut, Clock 
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { formatDate, formatTime, calculateTimeDifference } from '@/lib/date-utils';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Props extends PageProps {
     member: Member;
@@ -21,9 +29,20 @@ interface Props extends PageProps {
 
 export default function Dashboard({ member, currentSubscription, daysRemaining, subscriptionStatus, attendanceThisMonth, lastCheckIn, recentPayments }: Props) {
     const [processing, setProcessing] = useState(false);
+    const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
    
     const handleCheckIn = () => {
         if (processing) return;
+        
+        // Check if user is currently checked in
+        const isCheckedIn = lastCheckIn && !lastCheckIn.check_out_time;
+        
+        if (isCheckedIn) {
+            // This shouldn't happen as button should show "Check Out"
+            toast.error('You are already checked in');
+            return;
+        }
+        
         setProcessing(true);
         router.post('/attendances', {
             member_id: member.id,
@@ -47,14 +66,13 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
     const handleCheckOut = () => {
         if (!lastCheckIn || processing) return;
         
-        if (!confirm('Are you sure you want to check out?')) return;
-        
         setProcessing(true);
         router.put(`/attendances/${lastCheckIn.id}`, {
             check_out_time: new Date().toTimeString().split(' ')[0]
         }, {
             onSuccess: () => {
                 toast.success('Checked out successfully');
+                setShowCheckoutDialog(false);
             },
             onError: () => {
                 toast.error('Failed to check out');
@@ -65,6 +83,10 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
             preserveScroll: true,
         });
     };
+    
+    // Determine if user is currently checked in based on LAST record
+    const isCurrentlyCheckedIn = lastCheckIn && !lastCheckIn.check_out_time;
+    const isTodaySession = lastCheckIn && new Date(lastCheckIn.date).toDateString() === new Date().toDateString();
     const statusColors = {
         active: 'bg-green-500',
         expiring: 'bg-yellow-500',
@@ -156,7 +178,7 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {lastCheckIn && new Date(lastCheckIn.date).toDateString() === new Date().toDateString() ? (
+                            {isCurrentlyCheckedIn ? (
                                 <>
                                     <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                                         <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
@@ -167,22 +189,10 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                                             <p className="text-lg font-semibold">{lastCheckIn.check_in_time}</p>
                                         </div>
                                     </div>
-                                    {lastCheckIn.check_out_time ? (
-                                        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
-                                            <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                                                <LogOut className="h-6 w-6 text-red-600 dark:text-red-400" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-muted-foreground">Checked Out</p>
-                                                <p className="text-lg font-semibold">{lastCheckIn.check_out_time}</p>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <Button size="lg" variant="destructive" className="h-full" onClick={handleCheckOut} disabled={processing}>
-                                            <LogOut className="mr-2 h-5 w-5" />
-                                            {processing ? 'Processing...' : 'Check Out'}
-                                        </Button>
-                                    )}
+                                    <Button size="lg" variant="destructive" className="h-full" onClick={() => setShowCheckoutDialog(true)} disabled={processing}>
+                                        <LogOut className="mr-2 h-5 w-5" />
+                                        Check Out
+                                    </Button>
                                 </>
                             ) : (
                                 <Button size="lg" className="md:col-span-2" onClick={handleCheckIn} disabled={processing}>
@@ -191,11 +201,11 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                                 </Button>
                             )}
                         </div>
-                        {lastCheckIn && new Date(lastCheckIn.date).toDateString() === new Date().toDateString() && lastCheckIn.check_in_time && lastCheckIn.check_out_time && (
+                        {lastCheckIn && isTodaySession && lastCheckIn.check_in_time && lastCheckIn.check_out_time && lastCheckIn.duration && (
                             <div className="mt-4 p-3 bg-muted rounded-lg flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                                 <p className="text-sm text-muted-foreground">
-                                    Total time today: {calculateTimeDifference(lastCheckIn.check_in_time, lastCheckIn.check_out_time)}
+                                    Last session: {Math.floor(lastCheckIn.duration / 60)}h {lastCheckIn.duration % 60}m
                                 </p>
                             </div>
                         )}
@@ -287,6 +297,26 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Checkout Confirmation Dialog */}
+            <Dialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Check Out</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to check out? This will end your current session.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowCheckoutDialog(false)} disabled={processing}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCheckOut} disabled={processing}>
+                            {processing ? 'Processing...' : 'Check Out'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

@@ -112,15 +112,6 @@ class AttendanceService
      */
     public function recordAttendance(array $data): Attendance
     {
-        // Check if attendance already exists for this member on this date
-        $existing = Attendance::where('member_id', $data['member_id'])
-            ->whereDate('date', $data['date'])
-            ->first();
-
-        if ($existing) {
-            throw new \Exception('Attendance already recorded for this member on this date');
-        }
-
         $data['check_in_time'] = Carbon::parse($data['check_in_time'])->format('H:i:s');
 
         return Attendance::create($data);
@@ -140,6 +131,12 @@ class AttendanceService
         }
 
         $attendance->update($data);
+        
+        // Calculate duration if both times are present
+        if ($attendance->check_in_time && $attendance->check_out_time) {
+            $attendance->calculateDuration();
+        }
+        
         return $attendance->fresh(['member.user']);
     }
 
@@ -152,7 +149,7 @@ class AttendanceService
     }
 
     /**
-     * Handle QR code check-in/check-out
+     * Handle QR code check-in/check-out (SESSION-BASED)
      */
     public function handleQrCheckIn(int $memberId, ?int $userId = null): array
     {
@@ -169,40 +166,38 @@ class AttendanceService
             }
         }
 
-        $today = Carbon::today();
-        $existing = Attendance::where('member_id', $memberId)
-            ->whereDate('date', $today)
+        // Get the LAST attendance record for this member (regardless of date)
+        $lastRecord = Attendance::where('member_id', $memberId)
+            ->orderBy('id', 'desc')
             ->first();
 
-        if ($existing && !$existing->check_out_time) {
-            // Check out
-            $existing->update(['check_out_time' => Carbon::now()->format('H:i:s')]);
+        // CASE 2: Last record exists AND check_out IS NULL
+        if ($lastRecord && !$lastRecord->check_out_time) {
+            // User is currently checked in, so CHECK OUT
+            $lastRecord->update(['check_out_time' => Carbon::now()->format('H:i:s')]);
+            $lastRecord->calculateDuration();
+            
             return [
                 'success' => true,
                 'message' => 'Checked out successfully',
-                'type' => 'checkout'
+                'type' => 'checkout',
+                'attendance' => $lastRecord->fresh(['member.user'])
             ];
         }
 
-        if ($existing && $existing->check_out_time) {
-            return [
-                'success' => false,
-                'message' => 'Already checked out today',
-                'type' => 'error'
-            ];
-        }
-
-        // Check in
-        Attendance::create([
+        // CASE 1 & 3: No record exists OR last record has check_out
+        // Create NEW check-in session
+        $attendance = Attendance::create([
             'member_id' => $memberId,
-            'date' => $today,
+            'date' => Carbon::today(),
             'check_in_time' => Carbon::now()->format('H:i:s'),
         ]);
 
         return [
             'success' => true,
             'message' => 'Checked in successfully',
-            'type' => 'checkin'
+            'type' => 'checkin',
+            'attendance' => $attendance->fresh(['member.user'])
         ];
     }
 
@@ -245,8 +240,19 @@ class AttendanceService
     {
         return Attendance::where('member_id', $memberId)
             ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Get last attendance session for a member
+     */
+    public function getLastAttendanceSession(int $memberId): ?Attendance
+    {
+        return Attendance::where('member_id', $memberId)
+            ->orderBy('id', 'desc')
+            ->first();
     }
 
     /**

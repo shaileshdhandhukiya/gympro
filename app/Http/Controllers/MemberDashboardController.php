@@ -41,7 +41,7 @@ class MemberDashboardController extends Controller
             ->count();
 
         $lastCheckIn = Attendance::where('member_id', $member->id)
-            ->latest('date')
+            ->orderBy('id', 'desc')
             ->first();
 
         // Recent Payments - all subscriptions
@@ -100,19 +100,24 @@ class MemberDashboardController extends Controller
         $year = $request->input('year', Carbon::now()->year);
         $month = $request->input('month', Carbon::now()->month);
 
-        // Get all attendance for the selected month
+        // Get all attendance dates for the selected month (unique dates)
         $attendances = Attendance::where('member_id', $member->id)
             ->whereYear('date', $year)
             ->whereMonth('date', $month)
             ->get()
             ->pluck('date')
             ->map(fn($date) => Carbon::parse($date)->format('Y-m-d'))
+            ->unique()
+            ->values()
             ->toArray();
 
-        // Stats
+        // Stats - count unique dates for this month
         $stats = [
             'total_this_month' => count($attendances),
-            'total_all_time' => Attendance::where('member_id', $member->id)->count(),
+            'total_all_time' => Attendance::where('member_id', $member->id)
+                ->select('date')
+                ->distinct()
+                ->count(),
             'current_streak' => $this->calculateStreak($member->id),
         ];
 
@@ -127,7 +132,10 @@ class MemberDashboardController extends Controller
 
     private function calculateStreak($memberId)
     {
+        // Get unique attendance dates
         $attendances = Attendance::where('member_id', $memberId)
+            ->select('date')
+            ->distinct()
             ->orderBy('date', 'desc')
             ->pluck('date')
             ->map(fn($date) => Carbon::parse($date)->format('Y-m-d'))

@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
-// use App\Notifications\Events\SubscriptionCreatedEvent;
-// use App\Notifications\Events\SubscriptionExpiredEvent;
-// use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 
 class Subscription extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'member_id',
         'plan_id',

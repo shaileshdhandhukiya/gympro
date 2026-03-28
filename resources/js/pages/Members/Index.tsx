@@ -146,9 +146,9 @@ export default function Index({ members, stats, filters }: Props) {
 
                 <Card>
                     <CardContent className="pt-6 space-y-4">
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">Show</span>
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">Show</span>
                                 <Select value={filters.per_page.toString()} onValueChange={handlePerPageChange}>
                                     <SelectTrigger className="w-20">
                                         <SelectValue />
@@ -160,34 +160,36 @@ export default function Index({ members, stats, filters }: Props) {
                                         <SelectItem value="100">100</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <span className="text-sm text-muted-foreground">entries</span>
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">entries</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="relative w-64">
+                            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                                <div className="relative w-full sm:w-64">
                                     <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                     <Input
                                         placeholder="Search members..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-8 h-9"
+                                        className="pl-8 h-9 w-full"
                                     />
                                 </div>
-                                <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger className="w-40 h-9">
-                                        <SelectValue placeholder="Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                        <SelectItem value="expired">Expired</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {(search || status !== 'all') && (
-                                    <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                    <Select value={status} onValueChange={setStatus}>
+                                        <SelectTrigger className="w-full sm:w-40 h-9">
+                                            <SelectValue placeholder="Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Status</SelectItem>
+                                            <SelectItem value="active">Active</SelectItem>
+                                            <SelectItem value="inactive">Inactive</SelectItem>
+                                            <SelectItem value="expired">Expired</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {(search || status !== 'all') && (
+                                        <Button variant="ghost" size="sm" onClick={handleClearFilters} className="px-2">
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="overflow-x-auto">
@@ -207,25 +209,27 @@ export default function Index({ members, stats, filters }: Props) {
                                 </p>
                             </div>
                         )}
-                        <div className="flex items-center justify-between">
-                            <div className="text-sm text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
+                            <div className="text-sm text-muted-foreground text-center sm:text-left">
                                 Showing {startItem} to {endItem} of {members.total} results
                             </div>
-                            <Pagination>
-                                <PaginationContent>
-                                    <PaginationItem>
-                                        <PaginationPrevious onClick={() => handlePageChange(members.current_page - 1)} className={members.current_page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-                                    </PaginationItem>
-                                    {getPageNumbers().map((page, idx) => (
-                                        <PaginationItem key={idx}>
-                                            {page === '...' ? <PaginationEllipsis /> : <PaginationLink onClick={() => handlePageChange(page as number)} isActive={page === members.current_page} className="cursor-pointer">{page}</PaginationLink>}
+                            <div className="overflow-x-auto pb-2 sm:pb-0">
+                                <Pagination>
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious onClick={() => handlePageChange(members.current_page - 1)} className={members.current_page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
                                         </PaginationItem>
-                                    ))}
-                                    <PaginationItem>
-                                        <PaginationNext onClick={() => handlePageChange(members.current_page + 1)} className={members.current_page === members.last_page ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
+                                        {getPageNumbers().map((page, idx) => (
+                                            <PaginationItem key={idx}>
+                                                {page === '...' ? <PaginationEllipsis /> : <PaginationLink onClick={() => handlePageChange(page as number)} isActive={page === members.current_page} className="cursor-pointer">{page}</PaginationLink>}
+                                            </PaginationItem>
+                                        ))}
+                                        <PaginationItem>
+                                            <PaginationNext onClick={() => handlePageChange(members.current_page + 1)} className={members.current_page === members.last_page ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

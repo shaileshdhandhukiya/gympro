@@ -25,7 +25,12 @@ class SubscriptionService
      */
     public function getSubscriptions(array $filters = []): array
     {
-        $query = Subscription::with(['member.user', 'plan', 'payments', 'trainer.user'])
+        $query = Subscription::with([
+            'member.user',
+            'plan.features',
+            'payments',
+            'trainer.user'
+        ]) // ✅ Eager load all relationships to prevent N+1
             ->when(!empty($filters['search']), function ($q) use ($filters) {
                 $search = htmlspecialchars($filters['search'], ENT_QUOTES, 'UTF-8');
                 $q->whereHas('member.user', function ($query) use ($search) {
@@ -128,8 +133,12 @@ class SubscriptionService
      */
     public function getSubscriptionById(int $id): Subscription
     {
-        return Subscription::with(['member.user', 'plan', 'trainer.user', 'payments'])
-            ->findOrFail($id);
+        return Subscription::with([
+            'member.user',
+            'plan.features',
+            'trainer.user',
+            'payments'
+        ])->findOrFail($id); // ✅ Eager load all relationships
     }
 
     /**

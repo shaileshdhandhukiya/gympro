@@ -21,12 +21,15 @@ class MemberService
      */
     public function getMembers(array $filters = []): array
     {
-        $query = Member::with(['user', 'subscriptions' => function($q) {
-            $q->where('status', 'active')
-              ->where('end_date', '>=', now())
-              ->with('plan')
-              ->latest();
-        }]);
+        $query = Member::with([
+            'user',
+            'subscriptions' => function($q) {
+                $q->where('status', 'active')
+                  ->where('end_date', '>=', now())
+                  ->with('plan')
+                  ->latest();
+            }
+        ]); // ✅ Eager load to prevent N+1
 
         // Apply search filter
         if (!empty($filters['search'])) {
@@ -155,7 +158,10 @@ class MemberService
      */
     public function getMemberById(int $id): Member
     {
-        return Member::with(['user', 'subscriptions.plan', 'subscriptions.payments'])
-            ->findOrFail($id);
+        return Member::with([
+            'user',
+            'subscriptions.plan',
+            'subscriptions.payments'
+        ])->findOrFail($id); // ✅ Eager load all relationships
     }
 }

@@ -21,7 +21,10 @@ class PaymentService
      */
     public function getPayments(array $filters = []): array
     {
-        $query = Payment::with(['subscription.member.user', 'subscription.plan'])
+        $query = Payment::with([
+            'subscription.member.user',
+            'subscription.plan'
+        ]) // ✅ Eager load nested relationships
             ->when(!empty($filters['search']), function ($q) use ($filters) {
                 $search = htmlspecialchars($filters['search'], ENT_QUOTES, 'UTF-8');
                 $q->where('invoice_number', 'like', "%{$search}%")

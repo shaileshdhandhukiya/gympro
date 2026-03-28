@@ -12,28 +12,34 @@ use App\Models\Equipment;
 use App\Exports\ReportsExport;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Excel;
 
 class ReportService
 {
     /**
-     * Generate comprehensive reports
+     * Generate comprehensive reports with caching
      */
     public function generateReports(array $filters = []): array
     {
         $startDate = $filters['start_date'] ?? Carbon::now()->startOfMonth()->toDateString();
         $endDate = $filters['end_date'] ?? Carbon::now()->toDateString();
 
-        return [
-            'revenueStats' => $this->getRevenueStats($startDate, $endDate),
-            'attendanceStats' => $this->getAttendanceStats($startDate, $endDate),
-            'memberStats' => $this->getMemberStats(),
-            'subscriptionStats' => $this->getSubscriptionStats(),
-            'planStats' => $this->getPlanStats($startDate, $endDate),
-            'expenseStats' => $this->getExpenseStats($startDate, $endDate),
-            'equipmentStats' => $this->getEquipmentStats(),
-        ];
+        $cacheKey = 'reports:' . md5(json_encode($filters));
+        $cacheDuration = 300; // 5 minutes
+
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($startDate, $endDate) {
+            return [
+                'revenueStats' => $this->getRevenueStats($startDate, $endDate),
+                'attendanceStats' => $this->getAttendanceStats($startDate, $endDate),
+                'memberStats' => $this->getMemberStats(),
+                'subscriptionStats' => $this->getSubscriptionStats(),
+                'planStats' => $this->getPlanStats($startDate, $endDate),
+                'expenseStats' => $this->getExpenseStats($startDate, $endDate),
+                'equipmentStats' => $this->getEquipmentStats(),
+            ];
+        });
     }
 
     /**

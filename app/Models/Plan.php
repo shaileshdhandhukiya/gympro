@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 
 class Plan extends Model
 {
@@ -28,6 +29,22 @@ class Plan extends Model
     ];
 
     /**
+     * Boot method to clear cache on changes
+     */
+    protected static function booted()
+    {
+        static::saved(function () {
+            Cache::forget('plans:active');
+            Cache::forget('plans:all');
+        });
+
+        static::deleted(function () {
+            Cache::forget('plans:active');
+            Cache::forget('plans:all');
+        });
+    }
+
+    /**
      * Get features for this plan
      */
     public function features(): BelongsToMany
@@ -41,5 +58,17 @@ class Plan extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Get active plans with caching
+     */
+    public static function getActivePlans()
+    {
+        return Cache::remember('plans:active', 3600, function () {
+            return self::with('features')
+                ->where('status', 'active')
+                ->get();
+        });
     }
 }

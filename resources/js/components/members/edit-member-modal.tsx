@@ -114,7 +114,7 @@ export default function EditMemberModal({ open, onOpenChange, member }: Props) {
                             <Input
                                 id="date_of_birth"
                                 type="date"
-                                value={data.date_of_birth.split('T')[0]}
+                                value={data.date_of_birth ? data.date_of_birth.split('T')[0] : ''}
                                 onChange={(e) => setData('date_of_birth', e.target.value)}
                             />
                             {errors.date_of_birth && <p className="text-sm text-destructive">{errors.date_of_birth}</p>}
@@ -125,7 +125,7 @@ export default function EditMemberModal({ open, onOpenChange, member }: Props) {
                             <Input
                                 id="join_date"
                                 type="date"
-                                value={data.join_date.split('T')[0]}
+                                value={data.join_date ? data.join_date.split('T')[0] : ''}
                                 onChange={(e) => setData('join_date', e.target.value)}
                             />
                             {errors.join_date && <p className="text-sm text-destructive">{errors.join_date}</p>}

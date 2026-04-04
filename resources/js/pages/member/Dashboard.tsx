@@ -244,8 +244,8 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-1">
-                                <p className="text-sm"><span className="text-muted-foreground">Email:</span> {member.email}</p>
-                                <p className="text-sm"><span className="text-muted-foreground">Phone:</span> {member.phone}</p>
+                                <p className="text-sm"><span className="text-muted-foreground">Email:</span> {member.user?.email}</p>
+                                <p className="text-sm"><span className="text-muted-foreground">Phone:</span> {member.user?.phone}</p>
                                 <p className="text-sm"><span className="text-muted-foreground">Member Since:</span> {formatDate(member.join_date)}</p>
                             </div>
                         </CardContent>

@@ -38,17 +38,19 @@ class GoogleController extends Controller
                     'google_id' => $googleUser->getId(),
                     'password' => bcrypt(str()->random(24)),
                     'email_verified_at' => now(),
+                    'status' => 'active',
                 ]);
 
+                // Assign Member role by default
                 $memberRole = Role::where('name', 'Member')->first();
                 if ($memberRole) {
                     $user->roles()->attach($memberRole->id);
                 }
                 
+                // Create Member record
                 Member::create([
                     'user_id' => $user->id,
                     'status' => 'active',
-                    'date_of_birth' => null,
                     'join_date' => now()->toDateString(),
                 ]);
             }

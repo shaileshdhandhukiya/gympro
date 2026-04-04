@@ -34,6 +34,12 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
     const handleCheckIn = () => {
         if (processing) return;
         
+        // Check if subscription is active
+        if (!currentSubscription || subscriptionStatus === 'expired' || subscriptionStatus === 'none') {
+            toast.error('You need an active subscription to check in');
+            return;
+        }
+        
         // Check if user is currently checked in
         const isCheckedIn = lastCheckIn && !lastCheckIn.check_out_time;
         
@@ -87,6 +93,8 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
     // Determine if user is currently checked in based on LAST record
     const isCurrentlyCheckedIn = lastCheckIn && !lastCheckIn.check_out_time;
     const isTodaySession = lastCheckIn && new Date(lastCheckIn.date).toDateString() === new Date().toDateString();
+    const canCheckIn = currentSubscription && (subscriptionStatus === 'active' || subscriptionStatus === 'expiring');
+    
     const statusColors = {
         active: 'bg-green-500',
         expiring: 'bg-yellow-500',
@@ -177,37 +185,52 @@ export default function Dashboard({ member, currentSubscription, daysRemaining, 
                         <CardDescription>Mark your attendance for today</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {isCurrentlyCheckedIn ? (
-                                <>
-                                    <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                                        <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                                            <LogIn className="h-6 w-6 text-green-600 dark:text-green-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Checked In</p>
-                                            <p className="text-lg font-semibold">{lastCheckIn.check_in_time}</p>
-                                        </div>
-                                    </div>
-                                    <Button size="lg" variant="destructive" className="h-full" onClick={() => setShowCheckoutDialog(true)} disabled={processing}>
-                                        <LogOut className="mr-2 h-5 w-5" />
-                                        Check Out
-                                    </Button>
-                                </>
-                            ) : (
-                                <Button size="lg" className="md:col-span-2" onClick={handleCheckIn} disabled={processing}>
-                                    <LogIn className="mr-2 h-5 w-5" />
-                                    {processing ? 'Processing...' : 'Check In Now'}
-                                </Button>
-                            )}
-                        </div>
-                        {lastCheckIn && isTodaySession && lastCheckIn.check_in_time && lastCheckIn.check_out_time && lastCheckIn.duration && (
-                            <div className="mt-4 p-3 bg-muted rounded-lg flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground">
-                                    Last session: {Math.floor(lastCheckIn.duration / 60)}h {lastCheckIn.duration % 60}m
+                        {!canCheckIn ? (
+                            <div className="text-center py-8">
+                                <p className="text-muted-foreground mb-4">
+                                    {subscriptionStatus === 'expired' 
+                                        ? 'Your subscription has expired. Please renew to check in.'
+                                        : 'You need an active subscription to check in.'}
                                 </p>
+                                <Link href="/member/plans">
+                                    <Button>View Plans</Button>
+                                </Link>
                             </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {isCurrentlyCheckedIn ? (
+                                        <>
+                                            <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                                                <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                                                    <LogIn className="h-6 w-6 text-green-600 dark:text-green-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Checked In</p>
+                                                    <p className="text-lg font-semibold">{lastCheckIn.check_in_time}</p>
+                                                </div>
+                                            </div>
+                                            <Button size="lg" variant="destructive" className="h-full" onClick={() => setShowCheckoutDialog(true)} disabled={processing}>
+                                                <LogOut className="mr-2 h-5 w-5" />
+                                                Check Out
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Button size="lg" className="md:col-span-2" onClick={handleCheckIn} disabled={processing}>
+                                            <LogIn className="mr-2 h-5 w-5" />
+                                            {processing ? 'Processing...' : 'Check In Now'}
+                                        </Button>
+                                    )}
+                                </div>
+                                {lastCheckIn && isTodaySession && lastCheckIn.check_in_time && lastCheckIn.check_out_time && lastCheckIn.duration && (
+                                    <div className="mt-4 p-3 bg-muted rounded-lg flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-muted-foreground" />
+                                        <p className="text-sm text-muted-foreground">
+                                            Last session: {Math.floor(lastCheckIn.duration / 60)}h {lastCheckIn.duration % 60}m
+                                        </p>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </CardContent>
                     </Card>

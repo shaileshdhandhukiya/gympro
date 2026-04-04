@@ -19,7 +19,31 @@ class ExerciseController extends Controller
             abort(403);
         }
 
-        $filters = $request->only(['search', 'category', 'difficulty', 'muscle_group', 'status', 'per_page']);
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+            'category' => 'nullable|string',
+            'difficulty' => 'nullable|string',
+            'muscle_group' => 'nullable|string',
+            'status' => 'nullable|string',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $search = $validated['search'] ?? null;
+        $category = $validated['category'] ?? null;
+        $difficulty = $validated['difficulty'] ?? null;
+        $muscleGroup = $validated['muscle_group'] ?? null;
+        $status = $validated['status'] ?? null;
+        $perPage = $validated['per_page'] ?? 10;
+
+        $filters = [
+            'search' => $search,
+            'category' => $category,
+            'difficulty' => $difficulty,
+            'muscle_group' => $muscleGroup,
+            'status' => $status,
+            'per_page' => $perPage,
+        ];
+
         $data = $this->exerciseService->getExercises($filters);
 
         return Inertia::render('Exercises/Index', [

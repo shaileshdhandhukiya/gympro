@@ -25,10 +25,14 @@ class EquipmentController extends Controller
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
+        $search = $validated['search'] ?? null;
+        $statusFilter = $validated['status'] ?? null;
+        $perPage = $validated['per_page'] ?? 10;
+
         $filters = [
-            'search'   => $validated['search'] ?? null,
-            'status'   => $validated['status'] ?? null,
-            'per_page' => (int) ($validated['per_page'] ?? 10),
+            'search'   => $search,
+            'status'   => $statusFilter,
+            'per_page' => $perPage,
         ];
 
         $result = $this->equipmentService->getEquipment($filters);

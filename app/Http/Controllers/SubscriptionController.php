@@ -24,14 +24,18 @@ class SubscriptionController extends Controller
 
         $validated = $request->validate([
             'search' => 'nullable|string|max:255',
-            'per_page' => 'nullable|integer|min:1|max:100',
             'status' => 'nullable|string',
+            'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
+        $search = $validated['search'] ?? null;
+        $statusFilter = $validated['status'] ?? null;
+        $perPage = $validated['per_page'] ?? 10;
+
         $filters = [
-            'search' => $validated['search'] ?? null,
-            'per_page' => $validated['per_page'] ?? 10,
-            'status' => $validated['status'] ?? null,
+            'search' => $search,
+            'status' => $statusFilter,
+            'per_page' => $perPage,
         ];
 
         $result = $this->subscriptionService->getSubscriptions($filters);

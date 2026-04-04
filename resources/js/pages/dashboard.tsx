@@ -6,7 +6,7 @@ import SubscriptionTimeline from '@/components/dashboard/subscription-timeline';
 import { RevenueTrend } from '@/components/dashboard/revenue-trend';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Subscription } from '@/types';
+import { Subscription, type BreadcrumbItem } from '@/types';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
@@ -24,6 +24,13 @@ interface Props {
     attendance_trend: { date: string; count: number }[];
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+    },
+];
+
 const revenueChartConfig = {
     revenue: {
         label: "Revenue",
@@ -40,7 +47,7 @@ const attendanceChartConfig = {
 
 export default function Dashboard({ stats, expiring_soon, recent_subscriptions, revenue_trend, attendance_trend }: Props) {
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="container mx-auto p-6 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

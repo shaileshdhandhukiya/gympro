@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Bell, Check, Trash2, Clock, CheckCheck, Inbox, AlertCircle } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
 
@@ -118,6 +119,22 @@ export default function NotificationsIndex({ notifications }: Props) {
         if (days < 7) return `${days}d ago`;
         
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const { current_page, last_page } = notifications.meta;
+        if (last_page <= 7) return Array.from({ length: last_page }, (_, i) => i + 1);
+        pages.push(1);
+        if (current_page > 3) pages.push('...');
+        for (let i = Math.max(2, current_page - 1); i <= Math.min(last_page - 1, current_page + 1); i++) pages.push(i);
+        if (current_page < last_page - 2) pages.push('...');
+        pages.push(last_page);
+        return pages;
+    };
+
+    const handlePageChange = (page: number) => {
+        router.visit(`/notifications?page=${page}`, { preserveState: true });
     };
 
     // Filter notifications based on active tab
@@ -336,19 +353,41 @@ export default function NotificationsIndex({ notifications }: Props) {
 
                 {/* Pagination */}
                 {notifications.meta.last_page > 1 && (
-                    <div className="flex justify-center gap-2 mt-10">
-                        {notifications.links.map((link: any, index: number) => (
-                            <Button
-                                key={index}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="icon"
-                                disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
-                                className={link.active ? 'shadow-md' : ''}
-                            >
-                                <span dangerouslySetInnerHTML={{ __html: link.label.replace(/&laquo;|&raquo;/g, '').trim() || '...' }} />
-                            </Button>
-                        ))}
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t">
+                        <div className="text-sm text-muted-foreground">
+                            Showing page {notifications.meta.current_page} of {notifications.meta.last_page}
+                        </div>
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious 
+                                        onClick={() => handlePageChange(notifications.meta.current_page - 1)} 
+                                        className={notifications.meta.current_page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} 
+                                    />
+                                </PaginationItem>
+                                {getPageNumbers().map((page, idx) => (
+                                    <PaginationItem key={idx}>
+                                        {page === '...' ? (
+                                            <PaginationEllipsis />
+                                        ) : (
+                                            <PaginationLink 
+                                                onClick={() => handlePageChange(page as number)} 
+                                                isActive={page === notifications.meta.current_page} 
+                                                className="cursor-pointer"
+                                            >
+                                                {page}
+                                            </PaginationLink>
+                                        )}
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationNext 
+                                        onClick={() => handlePageChange(notifications.meta.current_page + 1)} 
+                                        className={notifications.meta.current_page === notifications.meta.last_page ? 'pointer-events-none opacity-50' : 'cursor-pointer'} 
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
                     </div>
                 )}
             </div>

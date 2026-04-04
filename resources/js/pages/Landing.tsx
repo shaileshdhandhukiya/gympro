@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Link } from '@inertiajs/react';
 import FrontendNav from '@/components/FrontendNav';
 import FrontendFooter from '@/components/FrontendFooter';
-import { Users, Clock, CreditCard, Dumbbell, BarChart3, Lock, Zap, CheckCircle2 } from 'lucide-react';
+import { Users, Clock, CreditCard, Dumbbell, BarChart3, CheckCircle2 } from 'lucide-react';
 
 const features = [
     {
@@ -82,30 +82,30 @@ const pricing = [
 
 export default function Landing() {
     return (
-        <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
             <FrontendNav />
 
-            {/* Hero Section */}
-            <section className="container mx-auto px-4 py-16 md:py-24 lg:py-32 flex-1">
-                <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <section className="site-container flex flex-1 items-center py-16 md:py-24 lg:py-32">
+                <div className="grid w-full items-center gap-12 lg:grid-cols-2">
                     <div className="space-y-6">
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+                        <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
                             Smart Gym Management Made Simple
                         </h1>
-                        <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-                            Streamline your gym operations with our all-in-one management platform. Track members, manage subscriptions, monitor attendance, and process payments—all in one place.
+                        <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+                            Streamline your gym operations with our all-in-one management platform. Track members, manage
+                            subscriptions, monitor attendance, and process payments all in one place.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <Link href="/register">
+                        <div className="flex flex-col gap-4 pt-4 sm:flex-row">
+                            <Link href="/register" className="sm:inline-flex">
                                 <Button size="lg" className="w-full sm:w-auto">Get Started</Button>
                             </Link>
                             <Button size="lg" variant="outline" className="w-full sm:w-auto">View Demo</Button>
                         </div>
                     </div>
                     <div className="hidden lg:block">
-                        <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border border-primary/20 aspect-square flex items-center justify-center">
-                            <div className="text-center space-y-4">
-                                <BarChart3 className="h-16 w-16 mx-auto text-primary/40" />
+                        <div className="flex aspect-square items-center justify-center rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-10">
+                            <div className="space-y-4 text-center">
+                                <BarChart3 className="mx-auto h-16 w-16 text-primary/40" />
                                 <p className="text-muted-foreground">Dashboard Preview</p>
                             </div>
                         </div>
@@ -115,19 +115,20 @@ export default function Landing() {
 
             <Separator />
 
-            {/* Features Section */}
-            <section className="container mx-auto px-4 py-16 md:py-24">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Everything you need to run your gym efficiently</p>
+            <section className="site-container site-section">
+                <div className="mb-12 text-center">
+                    <h2 className="mb-4 text-3xl font-bold md:text-4xl">Powerful Features</h2>
+                    <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                        Everything you need to run your gym efficiently
+                    </p>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {features.map((feature, idx) => {
                         const Icon = feature.icon;
                         return (
-                            <Card key={idx} className="border hover:shadow-lg transition-shadow">
+                            <Card key={idx} className="border transition-shadow hover:shadow-lg">
                                 <CardHeader>
-                                    <Icon className="h-8 w-8 text-primary mb-2" />
+                                    <Icon className="mb-2 h-8 w-8 text-primary" />
                                     <CardTitle className="text-lg">{feature.title}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -141,13 +142,14 @@ export default function Landing() {
 
             <Separator />
 
-            {/* Role-Based System Section */}
-            <section className="container mx-auto px-4 py-16 md:py-24">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Role-Based Access Control</h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Tailored dashboards for every user type</p>
+            <section className="site-container site-section">
+                <div className="mb-12 text-center">
+                    <h2 className="mb-4 text-3xl font-bold md:text-4xl">Role-Based Access Control</h2>
+                    <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                        Tailored dashboards for every user type
+                    </p>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {roles.map((role, idx) => (
                         <Card key={idx} className="border">
                             <CardHeader>
@@ -158,8 +160,8 @@ export default function Landing() {
                                 <ul className="space-y-2">
                                     {role.features.map((feature, i) => (
                                         <li key={i} className="flex items-center gap-2 text-sm">
-                                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                                            {feature}
+                                            <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
+                                            <span>{feature}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -171,17 +173,19 @@ export default function Landing() {
 
             <Separator />
 
-            {/* Pricing Section */}
-            <section className="container mx-auto px-4 py-16 md:py-24">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Choose the plan that fits your gym</p>
+            <section className="site-container site-section">
+                <div className="mb-12 text-center">
+                    <h2 className="mb-4 text-3xl font-bold md:text-4xl">Simple, Transparent Pricing</h2>
+                    <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                        Choose the plan that fits your gym
+                    </p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
                     {pricing.map((plan, idx) => (
-                        <Card key={idx} className={`border transition-all ${
-                            plan.popular ? 'ring-2 ring-primary shadow-lg' : ''
-                        }`}>
+                        <Card
+                            key={idx}
+                            className={`border transition-all ${plan.popular ? 'ring-2 ring-primary shadow-lg' : ''}`}
+                        >
                             {plan.popular && (
                                 <div className="px-6 pt-6">
                                     <Badge className="mb-4">Most Popular</Badge>
@@ -199,8 +203,8 @@ export default function Landing() {
                                 <ul className="space-y-3">
                                     {plan.features.map((feature, i) => (
                                         <li key={i} className="flex items-center gap-2 text-sm">
-                                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                                            {feature}
+                                            <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
+                                            <span>{feature}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -215,12 +219,13 @@ export default function Landing() {
 
             <Separator />
 
-            {/* CTA Section */}
-            <section className="container mx-auto px-4 py-16 md:py-24">
-                <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20 p-8 md:p-12 text-center space-y-6">
-                    <h2 className="text-3xl md:text-4xl font-bold">Ready to Transform Your Gym?</h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Join hundreds of gyms already using GYM Pro to streamline their operations</p>
-                    <Link href="/register">
+            <section className="site-container site-section">
+                <div className="space-y-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 p-8 text-center md:p-12">
+                    <h2 className="text-3xl font-bold md:text-4xl">Ready to Transform Your Gym?</h2>
+                    <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                        Join hundreds of gyms already using GYM Pro to streamline their operations
+                    </p>
+                    <Link href="/register" className="inline-flex">
                         <Button size="lg" className="px-8">Start Managing Your Gym Today</Button>
                     </Link>
                 </div>

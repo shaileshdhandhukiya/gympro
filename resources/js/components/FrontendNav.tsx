@@ -15,15 +15,15 @@ export default function FrontendNav({ showAuthButtons = true }: FrontendNavProps
 
     return (
         <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto px-4 py-3">
+            <div className="site-container py-3">
                 <div className="flex items-center justify-between gap-4">
-                    <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                    <Link href="/" className="flex min-w-0 flex-shrink items-center gap-2">
                         <AppLogo/>
                     </Link>
 
                     {/* Desktop Navigation - Centered */}
-                    <div className="hidden md:flex items-center justify-center flex-1">
-                        <div className="flex items-center gap-1">
+                    <div className="hidden flex-1 items-center justify-center md:flex">
+                        <div className="flex flex-wrap items-center justify-center gap-1">
                             <Link href="/" className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-all duration-200">
                                 Home
                             </Link>
@@ -38,7 +38,7 @@ export default function FrontendNav({ showAuthButtons = true }: FrontendNavProps
 
                     {/* Desktop Auth Buttons */}
                     {showAuthButtons && (
-                        <div className="hidden md:flex gap-2 flex-shrink-0">
+                        <div className="hidden flex-shrink-0 gap-2 md:flex">
                             {isAuthenticated ? (
                                 <Link href="/dashboard">
                                     <Button size="sm">Dashboard</Button>
@@ -58,8 +58,10 @@ export default function FrontendNav({ showAuthButtons = true }: FrontendNavProps
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden flex-shrink-0"
+                        className="flex-shrink-0 md:hidden"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-expanded={mobileMenuOpen}
+                        aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                     >
                         {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                     </button>

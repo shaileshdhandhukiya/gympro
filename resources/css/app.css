@@ -137,7 +137,21 @@
         @apply border-border;
     }
 
+    html {
+        @apply overflow-x-hidden;
+    }
+
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground overflow-x-hidden;
+    }
+}
+
+@layer components {
+    .site-container {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .site-section {
+        @apply py-16 md:py-24;
     }
 }

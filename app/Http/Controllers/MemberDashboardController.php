@@ -34,11 +34,12 @@ class MemberDashboardController extends Controller
             ->latest()
             ->first();
 
-        // Attendance Stats
+        // Attendance Stats - count unique dates
         $attendanceThisMonth = Attendance::where('member_id', $member->id)
             ->whereMonth('date', Carbon::now()->month)
             ->whereYear('date', Carbon::now()->year)
-            ->count();
+            ->distinct('date')
+            ->count('date');
 
         $lastCheckIn = Attendance::where('member_id', $member->id)
             ->orderBy('id', 'desc')

@@ -20,10 +20,20 @@ class PlanController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+            'status' => 'nullable|string',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $search = $validated['search'] ?? null;
+        $statusFilter = $validated['status'] ?? null;
+        $perPage = $validated['per_page'] ?? 10;
+
         $filters = [
-            'search' => $request->input('search'),
-            'status' => $request->input('status'),
-            'per_page' => (int) $request->input('per_page', 10),
+            'search' => $search,
+            'status' => $statusFilter,
+            'per_page' => $perPage,
         ];
 
         $result = $this->planService->getPlans($filters);
